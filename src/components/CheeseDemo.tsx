@@ -28,6 +28,8 @@ const CHEESE_D = 0.2;
 
 /* ── Particle pool ─────────────────────────────────── */
 const MAX_PARTICLES = 200;
+/** Seconds between particle spawns */
+const PARTICLE_SPAWN_RATE = 0.04;
 
 interface Particle {
   active: boolean;
@@ -116,9 +118,8 @@ export function CheeseDemo({ prototypeState }: Props) {
     /* ── Spawn grated cheese particles ──────────── */
     if (showCheeseOutput && isAnimating) {
       spawnTimer.current += delta;
-      const rate = 0.04;
-      while (spawnTimer.current >= rate) {
-        spawnTimer.current -= rate;
+      while (spawnTimer.current >= PARTICLE_SPAWN_RATE) {
+        spawnTimer.current -= PARTICLE_SPAWN_RATE;
         const p = particles.current[nextSlot.current % MAX_PARTICLES];
         nextSlot.current++;
         p.active = true;

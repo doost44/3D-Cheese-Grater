@@ -89,7 +89,7 @@ interface Props {
 
 export function GrateTogetherModel({ prototypeState }: Props) {
   const { mode, shutterOpen, pusherEnabled, pusherPosition, binInserted } = prototypeState;
-  const accent = MODE_ACCENT[mode];
+  const modeAccentColor = MODE_ACCENT[mode];
 
   /* Animated refs for smooth transitions */
   const shutterRef = useRef<THREE.Group>(null);
@@ -118,7 +118,7 @@ export function GrateTogetherModel({ prototypeState }: Props) {
 
     // Animate accent material colour
     if (accentRef.current) {
-      const targetColor = new THREE.Color(accent);
+      const targetColor = new THREE.Color(modeAccentColor);
       accentRef.current.color.lerp(targetColor, Math.min(delta * 5, 1));
     }
 
@@ -196,7 +196,7 @@ export function GrateTogetherModel({ prototypeState }: Props) {
         {/* Mode indicator dot with animated colour */}
         <mesh position={[-0.12, 0, 0.005]}>
           <circleGeometry args={[0.04, 16]} />
-          <meshStandardMaterial ref={accentRef} color={accent} emissive={accent} emissiveIntensity={0.6} />
+          <meshStandardMaterial ref={accentRef} color={modeAccentColor} emissive={modeAccentColor} emissiveIntensity={0.6} />
         </mesh>
         {/* Toggle label */}
         <mesh position={[0.08, 0, 0.005]}>
@@ -243,7 +243,7 @@ export function GrateTogetherModel({ prototypeState }: Props) {
         {/* Green/accent accent stripe on shutter */}
         <mesh position={[0, BODY_H * 0.35 + PLATE_H / 2 + 0.03, 0.013]}>
           <planeGeometry args={[BASE_W * 0.5, 0.025]} />
-          <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.3} />
+          <meshStandardMaterial color={modeAccentColor} emissive={modeAccentColor} emissiveIntensity={0.3} />
         </mesh>
       </group>
 
@@ -327,7 +327,7 @@ export function GrateTogetherModel({ prototypeState }: Props) {
           {/* End-stop indicator */}
           <mesh position={[0, -BODY_H * 0.25 + 0.04, 0]}>
             <boxGeometry args={[0.08, 0.03, 0.08]} />
-            <meshStandardMaterial color={accent} emissive={accent} emissiveIntensity={0.3} />
+            <meshStandardMaterial color={modeAccentColor} emissive={modeAccentColor} emissiveIntensity={0.3} />
           </mesh>
         </group>
       )}
