@@ -1,31 +1,21 @@
-import { useState, useCallback } from 'react';
-import type { GraterMode } from './types';
 import { Scene } from './components/Scene';
-import { Controls } from './components/Controls';
+import { ControlPanel } from './components/ControlPanel';
+import { usePrototypeState } from './hooks/usePrototypeState';
 import './App.css';
 
 function App() {
-  const [mode, setMode] = useState<GraterMode>('coarse');
-  const [isGrating, setIsGrating] = useState(false);
-
-  const handleModeChange = useCallback((newMode: GraterMode) => {
-    setMode(newMode);
-  }, []);
-
-  const handleGrateToggle = useCallback(() => {
-    setIsGrating((prev) => !prev);
-  }, []);
+  const { state, setMode, activate, reset } = usePrototypeState();
 
   return (
     <div className="app">
       <div className="canvas-wrap">
-        <Scene mode={mode} isGrating={isGrating} />
+        <Scene prototypeState={state} />
       </div>
-      <Controls
-        mode={mode}
-        isGrating={isGrating}
-        onModeChange={handleModeChange}
-        onGrateToggle={handleGrateToggle}
+      <ControlPanel
+        state={state}
+        onModeChange={setMode}
+        onActivate={activate}
+        onReset={reset}
       />
     </div>
   );

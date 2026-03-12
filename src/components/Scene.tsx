@@ -1,23 +1,27 @@
+/**
+ * Scene — sets up the 3D canvas with lighting, environment,
+ * the GrateTogether model, cheese demo, mode indicators, and orbit controls.
+ */
 import { Canvas } from '@react-three/fiber';
-import { OrbitControls, ContactShadows, Environment } from '@react-three/drei';
+import { OrbitControls, ContactShadows } from '@react-three/drei';
 import { Suspense } from 'react';
-import type { GraterMode } from '../types';
-import { GraterModel } from './GraterModel';
-import { CheeseAnimation } from './CheeseAnimation';
+import type { PrototypeState } from '../types';
+import { GrateTogetherModel } from './GrateTogetherModel';
+import { CheeseDemo } from './CheeseDemo';
+import { ModeIndicators } from './ModeIndicators';
 
 interface SceneProps {
-  mode: GraterMode;
-  isGrating: boolean;
+  prototypeState: PrototypeState;
 }
 
-function SceneContent({ mode, isGrating }: SceneProps) {
+function SceneContent({ prototypeState }: SceneProps) {
   return (
     <>
-      {/* Lighting */}
-      <ambientLight intensity={0.45} />
+      {/* Soft studio lighting */}
+      <ambientLight intensity={0.6} />
       <directionalLight
         position={[5, 8, 5]}
-        intensity={1.6}
+        intensity={1.4}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-near={0.1}
@@ -27,55 +31,57 @@ function SceneContent({ mode, isGrating }: SceneProps) {
         shadow-camera-top={6}
         shadow-camera-bottom={-6}
       />
-      <directionalLight position={[-4, 3, -3]} intensity={0.5} color="#c0d8ff" />
-      <pointLight position={[1, 3, 2]} intensity={0.6} color="#fff8e0" />
+      <directionalLight position={[-4, 4, -3]} intensity={0.6} color="#c0d8ff" />
+      <pointLight position={[1, 4, 3]} intensity={0.5} color="#fff8e0" />
+      <hemisphereLight args={['#ffffff', '#d0d0d0', 0.4]} />
 
-      {/* Environment reflections */}
-      <Environment preset="studio" />
+      {/* GrateTogether product model */}
+      <GrateTogetherModel prototypeState={prototypeState} />
 
-      {/* Cheese Grater */}
-      <GraterModel mode={mode} />
+      {/* Cheese interaction demo */}
+      <CheeseDemo prototypeState={prototypeState} />
 
-      {/* Cheese Block + Grated Cheese Particles (combined) */}
-      <CheeseAnimation mode={mode} isGrating={isGrating} />
+      {/* In-scene mode labels */}
+      <ModeIndicators prototypeState={prototypeState} />
 
-      {/* Cutting board surface */}
-      <mesh position={[0, -2.3, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
-        <planeGeometry args={[6, 5]} />
-        <meshStandardMaterial color="#c8a87a" roughness={0.95} metalness={0} />
+      {/* Countertop surface */}
+      <mesh position={[0, -0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
+        <planeGeometry args={[8, 6]} />
+        <meshStandardMaterial color="#d5cfc8" roughness={0.92} metalness={0} />
       </mesh>
 
-      {/* Contact shadows for depth */}
+      {/* Contact shadows */}
       <ContactShadows
-        position={[0, -2.29, 0]}
-        opacity={0.55}
-        scale={8}
+        position={[0, 0.01, 0]}
+        opacity={0.5}
+        scale={10}
         blur={2.5}
-        far={4}
+        far={5}
       />
 
       <OrbitControls
         enablePan={false}
-        minDistance={2.5}
-        maxDistance={8}
+        minDistance={3}
+        maxDistance={10}
         minPolarAngle={Math.PI / 8}
         maxPolarAngle={Math.PI / 2.1}
-        autoRotate={!isGrating}
-        autoRotateSpeed={0.6}
+        autoRotate={!prototypeState.isAnimating}
+        autoRotateSpeed={0.4}
+        target={[0, 1.6, 0]}
       />
     </>
   );
 }
 
-export function Scene({ mode, isGrating }: SceneProps) {
+export function Scene({ prototypeState }: SceneProps) {
   return (
     <Canvas
       shadows
-      camera={{ position: [2.8, 1.2, 4.5], fov: 44 }}
+      camera={{ position: [3.5, 2.8, 4.5], fov: 40 }}
       style={{ background: 'transparent' }}
     >
       <Suspense fallback={null}>
-        <SceneContent mode={mode} isGrating={isGrating} />
+        <SceneContent prototypeState={prototypeState} />
       </Suspense>
     </Canvas>
   );

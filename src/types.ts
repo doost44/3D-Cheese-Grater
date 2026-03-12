@@ -1,53 +1,37 @@
-export type GraterMode = 'fine' | 'coarse' | 'zest';
+/** GrateTogether dual-mode cheese grater workstation */
 
-export interface ModeConfig {
-  name: string;
-  symbol: string;
-  description: string;
-  holeSize: number;
-  holeSpacing: number;
-  holeShape: 'circle' | 'slot';
-  cheeseColor: string;
-  gratedColor: string;
-  particleScale: number;
-  spawnRate: number;
+export type GraterMode = 'safe' | 'pro';
+
+export interface PrototypeState {
+  mode: GraterMode;
+  isAnimating: boolean;
+  binInserted: boolean;
+  shutterOpen: boolean;
+  pusherEnabled: boolean;
+  /** 0 = top, 1 = bottom of travel */
+  pusherPosition: number;
+  /** 0 = not started, 1 = complete */
+  cheeseProgress: number;
+  showCheeseOutput: boolean;
 }
 
-export const MODE_CONFIGS: Record<GraterMode, ModeConfig> = {
-  fine: {
-    name: 'Fine',
-    symbol: '•••',
-    description: 'Perfect for Parmesan & hard cheeses',
-    holeSize: 8,
-    holeSpacing: 16,
-    holeShape: 'circle',
-    cheeseColor: '#f5c518',
-    gratedColor: '#ffe07a',
-    particleScale: 0.025,
-    spawnRate: 0.03,
-  },
-  coarse: {
-    name: 'Coarse',
-    symbol: '◉◉',
-    description: 'Great for Cheddar & softer cheeses',
-    holeSize: 22,
-    holeSpacing: 34,
-    holeShape: 'circle',
-    cheeseColor: '#e8920a',
-    gratedColor: '#f0a030',
-    particleScale: 0.07,
-    spawnRate: 0.07,
-  },
-  zest: {
-    name: 'Zest',
-    symbol: '≡≡',
-    description: 'Ideal for citrus zest & chocolate',
-    holeSize: 5,
-    holeSpacing: 13,
-    holeShape: 'slot',
-    cheeseColor: '#ffd700',
-    gratedColor: '#fff0a0',
-    particleScale: 0.02,
-    spawnRate: 0.025,
-  },
+export const INITIAL_STATE: PrototypeState = {
+  mode: 'safe',
+  isAnimating: false,
+  binInserted: true,
+  shutterOpen: false,
+  pusherEnabled: true,
+  pusherPosition: 0,
+  cheeseProgress: 0,
+  showCheeseOutput: false,
 };
+
+/** Visual accent colours per mode */
+export const MODE_ACCENT: Record<GraterMode, string> = {
+  safe: '#34c759',   // green
+  pro: '#d63031',    // dark red
+};
+
+/** Cheese appearance constants */
+export const CHEESE_COLOR = '#f5d060';
+export const GRATED_COLOR = '#ffe07a';
