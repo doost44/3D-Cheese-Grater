@@ -1,11 +1,10 @@
 /**
- * GrateTogetherModel — procedural 3D model of the GrateTogether
+ * GrateTogetherModel — refined procedural 3D model of the GrateTogether
  * dual-mode countertop cheese grater workstation.
  *
- * Built entirely from primitive geometry (boxes, cylinders, torus, planes)
- * grouped to form the canonical silhouette: tall upright trapezoid body,
- * rounded funnel, side handles, front grater plate, collection bin,
- * shutter, pusher carriage, and stable base.
+ * Uses smooth ExtrudeGeometry for the main body, proper materials (meshPhysicalMaterial),
+ * improved handle integration, staggered grater perforations, and better visual hierarchy
+ * through seams, insets, and material contrast.
  */
 import { useRef, useMemo } from 'react';
 import { useFrame } from '@react-three/fiber';
@@ -14,34 +13,73 @@ import type { PrototypeState } from '../types';
 import { MODE_ACCENT } from '../types';
 
 /* ── Canonical proportions ─────────────────────────── */
-const BASE_W = 1.6;           // base width
-const TOP_W = BASE_W * 0.48;  // top width ~48% of base
-const BODY_H = BASE_W * 2.2;  // height ≈ 2.2× base width
-const BODY_D = 0.9;           // depth
+const BASE_W = 1.6;
+const TOP_W = BASE_W * 0.48;
+const BODY_H = BASE_W * 2.2;
+const BODY_D = 0.9;
 const FUNNEL_R = TOP_W * 0.44;
 const FUNNEL_H = 0.28;
-const BIN_H = BODY_H * 0.25;  // ~25% of total height
+const BIN_H = BODY_H * 0.25;
 const PLATE_H = BODY_H * 0.42;
 const HANDLE_SPAN = BODY_H * 0.6;
+const CORNER_R = 0.08;
+const BEVEL_R = 0.04;
 
 /* ── Colours ───────────────────────────────────────── */
-const BODY_COLOR = '#e8e4df';     // warm off-white
-const HANDLE_COLOR = '#5a5a5a';   // darker gray
-const STEEL_COLOR = '#b0b8c0';    // brushed stainless
-const BIN_COLOR = '#d4ecf7';      // transparent plastic tint
-const BASE_COLOR = '#c0bdb8';     // slight contrast
+const BODY_COLOR = '#e8e4df';
+const HANDLE_COLOR = '#525252';
+const STEEL_COLOR = '#b0b8c0';
+const BIN_COLOR = '#d4ecf7';
+const BASE_COLOR = '#c0bdb8';
+const SEAM_COLOR = '#b5b0a9';
+const DARK_TRIM = '#444';
 
-/* ── Helper: grater holes as a grid of small cylinders ── */
+/* ── Body geometry builder — smooth tapered shape with rounded edges ── */
+function createBodyGeometry(): THREE.BufferGeometry {
+  const shape = new THREE.Shape();
+  const bw = BASE_W / 2;
+  const tw = TOP_W / 2;
+  const h = BODY_H;
+  const r = CORNER_R;
+
+  shape.moveTo(-bw + r, 0);
+  shape.lineTo(bw - r, 0);
+  shape.quadraticCurveTo(bw, 0, bw, r);
+  shape.lineTo(tw, h - r);
+  shape.quadraticCurveTo(tw, h, tw - r, h);
+  shape.lineTo(-tw + r, h);
+  shape.quadraticCurveTo(-tw, h, -tw, h - r);
+  shape.lineTo(-bw, r);
+  shape.quadraticCurveTo(-bw, 0, -bw + r, 0);
+
+  const geo = new THREE.ExtrudeGeometry(shape, {
+    depth: BODY_D,
+    bevelEnabled: true,
+    bevelSize: BEVEL_R,
+    bevelThickness: BEVEL_R,
+    bevelSegments: 4,
+  });
+
+  // Center in Z (front at +BODY_D/2, back at -BODY_D/2)
+  geo.translate(0, 0, -BODY_D / 2);
+  geo.computeVertexNormals();
+  return geo;
+}
+
+/* ── Staggered grater perforation holes ────────────── */
 function GraterHoles({ width, height, rows, cols }: {
   width: number; height: number; rows: number; cols: number;
 }) {
   const positions = useMemo(() => {
-    const pts: [number, number][] = [];
+    const pts: [number, number, number][] = [];
     for (let r = 0; r < rows; r++) {
+      const xOffset = (r % 2) * (width * 0.8 / (cols - 1)) * 0.5;
       for (let c = 0; c < cols; c++) {
-        const x = (c / (cols - 1) - 0.5) * width * 0.8;
+        const x = (c / (cols - 1) - 0.5) * width * 0.8 + xOffset;
         const y = (r / (rows - 1) - 0.5) * height * 0.8;
-        pts.push([x, y]);
+        if (Math.abs(x) > width * 0.42) continue;
+        const size = 0.02 + ((r * cols + c) % 5) * 0.003;
+        pts.push([x, y, size]);
       }
     }
     return pts;
@@ -49,23 +87,29 @@ function GraterHoles({ width, height, rows, cols }: {
 
   return (
     <group>
-      {positions.map(([x, y], i) => (
-        <mesh key={i} position={[x, y, 0]}>
-          <circleGeometry args={[0.025, 6]} />
-          <meshStandardMaterial color="#2a2a2a" metalness={0.3} roughness={0.6} />
-        </mesh>
+      {positions.map(([x, y, size], i) => (
+        <group key={i} position={[x, y, 0]}>
+          <mesh>
+            <circleGeometry args={[size, 6]} />
+            <meshStandardMaterial color="#1e1e1e" metalness={0.4} roughness={0.5} />
+          </mesh>
+          <mesh position={[0, 0, -0.001]}>
+            <ringGeometry args={[size, size + 0.005, 6]} />
+            <meshStandardMaterial color={STEEL_COLOR} metalness={0.9} roughness={0.2} />
+          </mesh>
+        </group>
       ))}
     </group>
   );
 }
 
-/* ── Shutter slot windows ──────────────────────────── */
+/* ── Shutter slot windows with depth ───────────────── */
 function ShutterSlots({ width, height }: { width: number; height: number }) {
   const slots = useMemo(() => {
     const s: number[] = [];
-    const count = 5;
+    const count = 7;
     for (let i = 0; i < count; i++) {
-      s.push((i / (count - 1) - 0.5) * height * 0.7);
+      s.push((i / (count - 1) - 0.5) * height * 0.72);
     }
     return s;
   }, [height]);
@@ -73,10 +117,16 @@ function ShutterSlots({ width, height }: { width: number; height: number }) {
   return (
     <group>
       {slots.map((y, i) => (
-        <mesh key={i} position={[0, y, 0.002]}>
-          <planeGeometry args={[width * 0.6, 0.03]} />
-          <meshStandardMaterial color="#1a1a1a" metalness={0.2} roughness={0.5} />
-        </mesh>
+        <group key={i} position={[0, y, 0]}>
+          <mesh>
+            <boxGeometry args={[width * 0.55, 0.025, 0.008]} />
+            <meshStandardMaterial color="#181818" metalness={0.25} roughness={0.5} />
+          </mesh>
+          <mesh position={[0, 0, -0.004]}>
+            <boxGeometry args={[width * 0.58, 0.032, 0.004]} />
+            <meshStandardMaterial color="#777" roughness={0.4} metalness={0.15} />
+          </mesh>
+        </group>
       ))}
     </group>
   );
@@ -91,7 +141,6 @@ export function GrateTogetherModel({ prototypeState }: Props) {
   const { mode, shutterOpen, pusherEnabled, pusherPosition, binInserted } = prototypeState;
   const modeAccentColor = MODE_ACCENT[mode];
 
-  /* Animated refs for smooth transitions */
   const shutterRef = useRef<THREE.Group>(null);
   const pusherRef = useRef<THREE.Group>(null);
   const accentRef = useRef<THREE.MeshStandardMaterial>(null);
@@ -100,182 +149,265 @@ export function GrateTogetherModel({ prototypeState }: Props) {
   const targetShutterY = shutterOpen ? PLATE_H + 0.1 : 0;
   const shutterYRef = useRef(0);
 
-  /* Smooth shutter animation & pusher travel per frame */
   useFrame((_, delta) => {
-    // Animate shutter
     if (shutterRef.current) {
       shutterYRef.current += (targetShutterY - shutterYRef.current) * Math.min(delta * 4, 1);
       shutterRef.current.position.y = shutterYRef.current;
     }
-
-    // Animate pusher position along feed channel
     if (pusherRef.current) {
-      const targetY = pusherEnabled
-        ? -pusherPosition * (BODY_H * 0.55)
-        : 0;
+      const targetY = pusherEnabled ? -pusherPosition * (BODY_H * 0.55) : 0;
       pusherRef.current.position.y += (targetY - pusherRef.current.position.y) * Math.min(delta * 5, 1);
     }
-
-    // Animate accent material colour
     if (accentRef.current) {
       const targetColor = new THREE.Color(modeAccentColor);
       accentRef.current.color.lerp(targetColor, Math.min(delta * 5, 1));
     }
-
-    // Animate bin latch indicator
     if (binLatchRef.current) {
       const targetScale = binInserted ? 1 : 0.5;
       binLatchRef.current.scale.x += (targetScale - binLatchRef.current.scale.x) * Math.min(delta * 5, 1);
     }
   });
 
-  /* Body bottom Y offset so bottom of body sits near y=0 */
-  const bodyBottomY = 0;
+  const bodyGeometry = useMemo(() => createBodyGeometry(), []);
 
   return (
-    <group position={[0, bodyBottomY, 0]}>
+    <group>
 
-      {/* ── G. Base ──────────────────────────────────── */}
+      {/* ── Base assembly ───────────────────────────── */}
+      {/* Anti-slip rubber foot strip */}
+      <mesh position={[0, 0.004, 0]}>
+        <boxGeometry args={[BASE_W + 0.22, 0.008, BODY_D + 0.22]} />
+        <meshStandardMaterial color={DARK_TRIM} roughness={0.95} metalness={0.02} />
+      </mesh>
+      {/* Main base platform */}
       <mesh position={[0, 0.06, 0]} castShadow receiveShadow>
-        <boxGeometry args={[BASE_W + 0.15, 0.12, BODY_D + 0.15]} />
-        <meshStandardMaterial color={BASE_COLOR} roughness={0.85} metalness={0.05} />
+        <boxGeometry args={[BASE_W + 0.16, 0.1, BODY_D + 0.16]} />
+        <meshPhysicalMaterial color={BASE_COLOR} roughness={0.78} metalness={0.05} clearcoat={0.08} clearcoatRoughness={0.6} />
+      </mesh>
+      {/* Base-to-body transition lip */}
+      <mesh position={[0, 0.115, 0]}>
+        <boxGeometry args={[BASE_W + 0.06, 0.01, BODY_D + 0.06]} />
+        <meshStandardMaterial color={SEAM_COLOR} roughness={0.6} metalness={0.05} />
       </mesh>
       {/* Suction pads */}
-      {([[-0.55, -0.3], [0.55, -0.3], [-0.55, 0.3], [0.55, 0.3]] as [number, number][]).map(
+      {([[-0.58, -0.32], [0.58, -0.32], [-0.58, 0.32], [0.58, 0.32]] as [number, number][]).map(
         ([x, z], i) => (
-          <mesh key={i} position={[x, 0.01, z]} rotation={[-Math.PI / 2, 0, 0]}>
-            <cylinderGeometry args={[0.06, 0.07, 0.02, 12]} />
-            <meshStandardMaterial color="#444" roughness={0.9} metalness={0.1} />
-          </mesh>
+          <group key={`pad-${i}`} position={[x, 0.01, z]}>
+            <mesh rotation={[-Math.PI / 2, 0, 0]}>
+              <cylinderGeometry args={[0.055, 0.065, 0.015, 16]} />
+              <meshStandardMaterial color="#3a3a3a" roughness={0.95} metalness={0.05} />
+            </mesh>
+            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, -0.003]}>
+              <cylinderGeometry args={[0.04, 0.04, 0.006, 12]} />
+              <meshStandardMaterial color="#2a2a2a" roughness={0.98} metalness={0.02} />
+            </mesh>
+          </group>
         ),
       )}
 
-      {/* ── B. Main body (tapered trapezoid) ───────── */}
-      {/* Approximate with 3 stacked boxes, narrowing toward top */}
-      {(() => {
-        const sections = 6;
-        const elements: React.ReactNode[] = [];
-        const sectionH = BODY_H / sections;
-        for (let i = 0; i < sections; i++) {
-          const t = i / (sections - 1);
-          const w = THREE.MathUtils.lerp(BASE_W, TOP_W, t);
-          const d = THREE.MathUtils.lerp(BODY_D, BODY_D * 0.85, t);
-          const y = 0.12 + sectionH * i + sectionH / 2;
-          // slight backward lean
-          const zOff = -t * 0.06;
-          elements.push(
-            <mesh key={`body-${i}`} position={[0, y, zOff]} castShadow receiveShadow>
-              <boxGeometry args={[w, sectionH + 0.005, d]} />
-              <meshStandardMaterial color={BODY_COLOR} roughness={0.7} metalness={0.02} />
-            </mesh>,
-          );
-        }
-        return elements;
-      })()}
+      {/* ── Main body — smooth tapered form ─────────── */}
+      <mesh geometry={bodyGeometry} position={[0, 0.12, 0]} castShadow receiveShadow>
+        <meshPhysicalMaterial
+          color={BODY_COLOR}
+          roughness={0.55}
+          metalness={0.02}
+          clearcoat={0.12}
+          clearcoatRoughness={0.5}
+        />
+      </mesh>
+      {/* Horizontal parting seam at mid-body */}
+      <mesh position={[0, 0.12 + BODY_H * 0.52, BODY_D / 2 + 0.002]}>
+        <planeGeometry args={[BASE_W * 0.7, 0.005]} />
+        <meshStandardMaterial color={SEAM_COLOR} roughness={0.5} metalness={0.05} />
+      </mesh>
+      {/* Lower panel seam (below grater area) */}
+      <mesh position={[0, 0.12 + BODY_H * 0.12, BODY_D / 2 + 0.002]}>
+        <planeGeometry args={[BASE_W * 0.85, 0.004]} />
+        <meshStandardMaterial color={SEAM_COLOR} roughness={0.5} metalness={0.05} />
+      </mesh>
 
-      {/* ── A. Top funnel ────────────────────────────── */}
-      <group position={[0, BODY_H + 0.12 + FUNNEL_H / 2, -0.04]}>
+      {/* ── Top funnel ──────────────────────────────── */}
+      <group position={[0, BODY_H + 0.12 + FUNNEL_H / 2, -0.02]}>
+        {/* Outer funnel body — smooth taper */}
         <mesh castShadow>
-          <cylinderGeometry args={[FUNNEL_R * 0.85, FUNNEL_R * 1.15, FUNNEL_H, 24]} />
-          <meshStandardMaterial color={BODY_COLOR} roughness={0.65} metalness={0.05} />
+          <cylinderGeometry args={[FUNNEL_R * 0.8, FUNNEL_R * 1.2, FUNNEL_H, 32]} />
+          <meshPhysicalMaterial color={BODY_COLOR} roughness={0.5} metalness={0.04} clearcoat={0.1} clearcoatRoughness={0.5} />
         </mesh>
-        {/* Inner dark ring */}
-        <mesh position={[0, FUNNEL_H / 2 - 0.01, 0]}>
-          <torusGeometry args={[FUNNEL_R * 0.75, 0.02, 8, 24]} />
-          <meshStandardMaterial color="#555" roughness={0.6} metalness={0.2} />
+        {/* Inner throat — darker recessed cavity */}
+        <mesh position={[0, 0.03, 0]}>
+          <cylinderGeometry args={[FUNNEL_R * 0.5, FUNNEL_R * 0.72, FUNNEL_H * 0.75, 24]} />
+          <meshStandardMaterial color="#6a6a6a" roughness={0.65} metalness={0.12} side={THREE.BackSide} />
+        </mesh>
+        {/* Lip rim */}
+        <mesh position={[0, FUNNEL_H / 2 - 0.008, 0]}>
+          <torusGeometry args={[FUNNEL_R * 0.8, 0.022, 12, 32]} />
+          <meshPhysicalMaterial color="#aaa8a3" roughness={0.35} metalness={0.18} clearcoat={0.15} />
+        </mesh>
+        {/* Transition ring where funnel meets body top */}
+        <mesh position={[0, -FUNNEL_H / 2 + 0.008, 0]}>
+          <torusGeometry args={[FUNNEL_R * 1.1, 0.012, 8, 32]} />
+          <meshStandardMaterial color={SEAM_COLOR} roughness={0.5} metalness={0.08} />
         </mesh>
       </group>
 
-      {/* ── D. Front control panel ───────────────────── */}
-      <group position={[0, BODY_H * 0.72, BODY_D / 2 + 0.01]}>
-        {/* Panel background */}
-        <mesh>
-          <planeGeometry args={[BASE_W * 0.45, 0.22]} />
-          <meshStandardMaterial color="#333" roughness={0.3} metalness={0.1} />
+      {/* ── Front control panel ─────────────────────── */}
+      <group position={[0, BODY_H * 0.72, BODY_D / 2 + 0.005]}>
+        {/* Inset panel recess */}
+        <mesh position={[0, 0, -0.006]}>
+          <boxGeometry args={[BASE_W * 0.42, 0.2, 0.014]} />
+          <meshPhysicalMaterial color="#2a2a2a" roughness={0.18} metalness={0.12} />
         </mesh>
-        {/* Mode indicator dot with animated colour */}
-        <mesh position={[-0.12, 0, 0.005]}>
-          <circleGeometry args={[0.04, 16]} />
+        {/* Panel surround frame */}
+        <mesh position={[0, 0, -0.001]}>
+          <planeGeometry args={[BASE_W * 0.44, 0.22]} />
+          <meshStandardMaterial color="#484848" roughness={0.35} metalness={0.1} />
+        </mesh>
+        {/* Mode indicator dot */}
+        <mesh position={[-0.11, 0.02, 0.008]}>
+          <circleGeometry args={[0.035, 16]} />
           <meshStandardMaterial ref={accentRef} color={modeAccentColor} emissive={modeAccentColor} emissiveIntensity={0.6} />
         </mesh>
-        {/* Toggle label */}
-        <mesh position={[0.08, 0, 0.005]}>
-          <planeGeometry args={[0.22, 0.06]} />
-          <meshStandardMaterial color="#666" roughness={0.5} metalness={0.1} />
+        {/* Power / status LED */}
+        <mesh position={[-0.11, -0.04, 0.008]}>
+          <circleGeometry args={[0.012, 12]} />
+          <meshStandardMaterial color="#666" emissive="#666" emissiveIntensity={0.15} roughness={0.3} metalness={0.2} />
+        </mesh>
+        {/* Label area */}
+        <mesh position={[0.06, 0.01, 0.008]}>
+          <planeGeometry args={[0.18, 0.045]} />
+          <meshStandardMaterial color="#555" roughness={0.4} metalness={0.1} />
+        </mesh>
+        {/* Subtle divider line */}
+        <mesh position={[-0.04, 0, 0.008]}>
+          <planeGeometry args={[0.003, 0.15]} />
+          <meshStandardMaterial color="#555" roughness={0.3} />
         </mesh>
       </group>
 
-      {/* ── E. Front grating face ────────────────────── */}
-      <group position={[0, BODY_H * 0.35, BODY_D / 2 + 0.005]}>
-        {/* Stainless steel plate */}
+      {/* ── Front grating face (stainless steel) ────── */}
+      <group position={[0, BODY_H * 0.35, BODY_D / 2 + 0.003]}>
+        {/* Inset recess behind grater */}
+        <mesh position={[0, 0, -0.015]}>
+          <boxGeometry args={[BASE_W * 0.62, PLATE_H + 0.02, 0.02]} />
+          <meshStandardMaterial color="#888" roughness={0.6} metalness={0.4} />
+        </mesh>
+        {/* Stainless steel plate with depth */}
         <mesh>
-          <planeGeometry args={[BASE_W * 0.62, PLATE_H]} />
-          <meshStandardMaterial
+          <boxGeometry args={[BASE_W * 0.6, PLATE_H, 0.018]} />
+          <meshPhysicalMaterial
             color={STEEL_COLOR}
-            roughness={0.25}
-            metalness={0.85}
+            roughness={0.18}
+            metalness={0.92}
+            clearcoat={0.25}
+            clearcoatRoughness={0.6}
           />
         </mesh>
-        {/* Perforation pattern */}
-        <group position={[0, 0, 0.003]}>
-          <GraterHoles width={BASE_W * 0.62} height={PLATE_H} rows={12} cols={8} />
+        {/* Perforations */}
+        <group position={[0, 0, 0.011]}>
+          <GraterHoles width={BASE_W * 0.6} height={PLATE_H} rows={14} cols={10} />
         </group>
+        {/* Frame border around grater plate */}
+        {([
+          [0, PLATE_H / 2 + 0.008, BASE_W * 0.62, 0.016],
+          [0, -PLATE_H / 2 - 0.008, BASE_W * 0.62, 0.016],
+          [-BASE_W * 0.31 - 0.005, 0, 0.012, PLATE_H + 0.02],
+          [BASE_W * 0.31 + 0.005, 0, 0.012, PLATE_H + 0.02],
+        ] as [number, number, number, number][]).map(([x, y, w, h], i) => (
+          <mesh key={`gf-${i}`} position={[x, y, 0.01]}>
+            <planeGeometry args={[w, h]} />
+            <meshStandardMaterial color="#8a8a8a" roughness={0.4} metalness={0.5} />
+          </mesh>
+        ))}
       </group>
 
-      {/* ── H. Safe-mode face shutter ────────────────── */}
-      <group
-        ref={shutterRef}
-        position={[0, 0, BODY_D / 2 + 0.015]}
-      >
-        {/* Shutter panel — sits over the grater plate */}
+      {/* ── Safe-mode face shutter ──────────────────── */}
+      <group ref={shutterRef} position={[0, 0, BODY_D / 2 + 0.02]}>
+        {/* Main shutter panel with thickness */}
         <mesh position={[0, BODY_H * 0.35, 0]}>
-          <boxGeometry args={[BASE_W * 0.65, PLATE_H + 0.04, 0.025]} />
-          <meshStandardMaterial
-            color={mode === 'safe' ? '#d0d0d0' : '#aaa'}
-            roughness={0.6}
-            metalness={0.1}
+          <boxGeometry args={[BASE_W * 0.63, PLATE_H + 0.04, 0.032]} />
+          <meshPhysicalMaterial
+            color={mode === 'safe' ? '#d2d2d0' : '#b0b0b0'}
+            roughness={0.48}
+            metalness={0.06}
+            clearcoat={0.06}
+            clearcoatRoughness={0.6}
           />
         </mesh>
-        {/* Narrow slot windows */}
-        <group position={[0, BODY_H * 0.35, 0.014]}>
-          <ShutterSlots width={BASE_W * 0.65} height={PLATE_H} />
+        {/* Left rail guide */}
+        <mesh position={[-BASE_W * 0.32, BODY_H * 0.35, 0]}>
+          <boxGeometry args={[0.022, PLATE_H + 0.08, 0.042]} />
+          <meshStandardMaterial color="#7a7a7a" roughness={0.4} metalness={0.15} />
+        </mesh>
+        {/* Right rail guide */}
+        <mesh position={[BASE_W * 0.32, BODY_H * 0.35, 0]}>
+          <boxGeometry args={[0.022, PLATE_H + 0.08, 0.042]} />
+          <meshStandardMaterial color="#7a7a7a" roughness={0.4} metalness={0.15} />
+        </mesh>
+        {/* Slot windows with depth */}
+        <group position={[0, BODY_H * 0.35, 0.017]}>
+          <ShutterSlots width={BASE_W * 0.63} height={PLATE_H} />
         </group>
-        {/* Green/accent accent stripe on shutter */}
-        <mesh position={[0, BODY_H * 0.35 + PLATE_H / 2 + 0.03, 0.013]}>
-          <planeGeometry args={[BASE_W * 0.5, 0.025]} />
+        {/* Top accent stripe */}
+        <mesh position={[0, BODY_H * 0.35 + PLATE_H / 2 + 0.03, 0.017]}>
+          <boxGeometry args={[BASE_W * 0.48, 0.022, 0.006]} />
           <meshStandardMaterial color={modeAccentColor} emissive={modeAccentColor} emissiveIntensity={0.3} />
         </mesh>
+        {/* Bottom grip edge */}
+        <mesh position={[0, BODY_H * 0.35 - PLATE_H / 2 - 0.025, 0.008]}>
+          <boxGeometry args={[BASE_W * 0.4, 0.018, 0.04]} />
+          <meshStandardMaterial color="#888" roughness={0.5} metalness={0.15} />
+        </mesh>
       </group>
 
-      {/* ── F. Transparent collection bin ─────────────── */}
+      {/* ── Transparent collection bin ──────────────── */}
       {binInserted && (
-        <group position={[0, BIN_H / 2 + 0.12, BODY_D / 2 + 0.12]}>
+        <group position={[0, BIN_H / 2 + 0.12, BODY_D / 2 + 0.13]}>
+          {/* Main transparent body */}
           <mesh castShadow>
-            <boxGeometry args={[BASE_W * 0.58, BIN_H, 0.35]} />
+            <boxGeometry args={[BASE_W * 0.56, BIN_H, 0.32]} />
             <meshPhysicalMaterial
               color={BIN_COLOR}
               transparent
-              opacity={0.35}
-              roughness={0.15}
+              opacity={0.22}
+              roughness={0.08}
               metalness={0.0}
-              transmission={0.6}
-              thickness={0.5}
+              transmission={0.72}
+              thickness={0.8}
+              clearcoat={0.3}
+              clearcoatRoughness={0.3}
             />
           </mesh>
-          {/* Bin rim */}
+          {/* Top rim */}
           <mesh position={[0, BIN_H / 2, 0]}>
-            <boxGeometry args={[BASE_W * 0.6, 0.025, 0.37]} />
-            <meshStandardMaterial color="#9bb" roughness={0.3} metalness={0.15} />
+            <boxGeometry args={[BASE_W * 0.58, 0.025, 0.34]} />
+            <meshPhysicalMaterial color="#9cc" roughness={0.22} metalness={0.1} clearcoat={0.15} />
           </mesh>
+          {/* Bottom edge */}
+          <mesh position={[0, -BIN_H / 2 + 0.008, 0]}>
+            <boxGeometry args={[BASE_W * 0.56, 0.016, 0.32]} />
+            <meshPhysicalMaterial color="#9cc" roughness={0.3} metalness={0.08} transparent opacity={0.6} />
+          </mesh>
+          {/* Front face edge highlight */}
+          <mesh position={[0, 0, 0.162]}>
+            <planeGeometry args={[BASE_W * 0.55, BIN_H * 0.9]} />
+            <meshPhysicalMaterial color="#e8f4fa" transparent opacity={0.06} roughness={0.05} />
+          </mesh>
+          {/* Left/right side edges */}
+          {([-1, 1] as const).map((s) => (
+            <mesh key={`be-${s}`} position={[s * BASE_W * 0.28, 0, 0]}>
+              <boxGeometry args={[0.012, BIN_H * 0.95, 0.31]} />
+              <meshPhysicalMaterial color="#b5dde8" transparent opacity={0.15} roughness={0.1} />
+            </mesh>
+          ))}
         </group>
       )}
 
-      {/* ── J. Bin-present latch / interlock indicator ── */}
+      {/* ── Bin-present latch / interlock indicator ─── */}
       <mesh
         ref={binLatchRef}
         position={[BASE_W * 0.32, BIN_H + 0.16, BODY_D / 2 + 0.01]}
       >
-        <boxGeometry args={[0.06, 0.06, 0.03]} />
+        <boxGeometry args={[0.05, 0.05, 0.025]} />
         <meshStandardMaterial
           color={binInserted ? '#34c759' : '#aaa'}
           emissive={binInserted ? '#34c759' : '#555'}
@@ -283,66 +415,73 @@ export function GrateTogetherModel({ prototypeState }: Props) {
         />
       </mesh>
 
-      {/* ── C. Side handles ──────────────────────────── */}
+      {/* ── Side handles ────────────────────────────── */}
       {([-1, 1] as const).map((side) => {
         const bodyWidthAtMid = THREE.MathUtils.lerp(BASE_W, TOP_W, 0.45);
-        const x = (bodyWidthAtMid / 2 + 0.12) * side;
+        const x = (bodyWidthAtMid / 2 + 0.11) * side;
         const midY = BODY_H * 0.45 + 0.12;
         return (
           <group key={side} position={[x, midY, 0]}>
-            {/* Handle loop */}
+            {/* Ergonomic handle loop */}
             <mesh rotation={[0, 0, Math.PI / 2]} castShadow>
-              <torusGeometry args={[HANDLE_SPAN / 2.5, 0.045, 8, 20, Math.PI]} />
-              <meshStandardMaterial color={HANDLE_COLOR} roughness={0.55} metalness={0.15} />
+              <torusGeometry args={[HANDLE_SPAN / 2.4, 0.055, 12, 24, Math.PI]} />
+              <meshPhysicalMaterial color={HANDLE_COLOR} roughness={0.7} metalness={0.08} />
             </mesh>
-            {/* Handle mounts */}
-            {([-1, 1] as const).map((dir) => (
-              <mesh key={dir} position={[0, dir * HANDLE_SPAN / 2.5, 0]} castShadow>
-                <cylinderGeometry args={[0.05, 0.05, 0.08, 8]} />
-                <meshStandardMaterial color={HANDLE_COLOR} roughness={0.55} metalness={0.15} />
-              </mesh>
-            ))}
+            {/* Upper mount pad */}
+            <mesh position={[0, HANDLE_SPAN / 2.4, 0]} castShadow>
+              <cylinderGeometry args={[0.065, 0.068, 0.1, 16]} />
+              <meshPhysicalMaterial color={HANDLE_COLOR} roughness={0.65} metalness={0.1} />
+            </mesh>
+            {/* Lower mount pad */}
+            <mesh position={[0, -HANDLE_SPAN / 2.4, 0]} castShadow>
+              <cylinderGeometry args={[0.065, 0.068, 0.1, 16]} />
+              <meshPhysicalMaterial color={HANDLE_COLOR} roughness={0.65} metalness={0.1} />
+            </mesh>
+            {/* Mount backing plate */}
+            <mesh position={[-0.03 * side, 0, 0]}>
+              <boxGeometry args={[0.025, HANDLE_SPAN * 0.55, 0.1]} />
+              <meshStandardMaterial color={HANDLE_COLOR} roughness={0.7} metalness={0.06} />
+            </mesh>
           </group>
         );
       })}
 
-      {/* ── I. Captive pusher carriage + enclosed feed channel ── */}
+      {/* ── Captive pusher carriage ─────────────────── */}
       {pusherEnabled && (
-        <group ref={pusherRef} position={[0, BODY_H + 0.08, -0.04]}>
-          {/* Pusher rod (guided channel) */}
+        <group ref={pusherRef} position={[0, BODY_H + 0.08, -0.02]}>
+          {/* Pusher rod */}
           <mesh castShadow>
-            <cylinderGeometry args={[0.04, 0.04, BODY_H * 0.5, 8]} />
-            <meshStandardMaterial color="#888" roughness={0.5} metalness={0.2} />
+            <cylinderGeometry args={[0.035, 0.035, BODY_H * 0.5, 12]} />
+            <meshStandardMaterial color="#888" roughness={0.45} metalness={0.25} />
           </mesh>
-          {/* Grippy two-hand cap */}
+          {/* Grip cap */}
           <mesh position={[0, BODY_H * 0.25 + 0.04, 0]} castShadow>
-            <cylinderGeometry args={[0.14, 0.12, 0.1, 16]} />
-            <meshStandardMaterial color={HANDLE_COLOR} roughness={0.6} metalness={0.1} />
+            <cylinderGeometry args={[0.13, 0.11, 0.1, 20]} />
+            <meshPhysicalMaterial color={HANDLE_COLOR} roughness={0.65} metalness={0.08} />
           </mesh>
-          {/* Cap grip ring */}
+          {/* Grip ring */}
           <mesh position={[0, BODY_H * 0.25 + 0.09, 0]}>
-            <torusGeometry args={[0.11, 0.02, 8, 16]} />
-            <meshStandardMaterial color="#666" roughness={0.5} metalness={0.2} />
+            <torusGeometry args={[0.11, 0.018, 10, 20]} />
+            <meshStandardMaterial color="#5e5e5e" roughness={0.5} metalness={0.18} />
           </mesh>
           {/* End-stop indicator */}
           <mesh position={[0, -BODY_H * 0.25 + 0.04, 0]}>
-            <boxGeometry args={[0.08, 0.03, 0.08]} />
+            <cylinderGeometry args={[0.04, 0.04, 0.025, 12]} />
             <meshStandardMaterial color={modeAccentColor} emissive={modeAccentColor} emissiveIntensity={0.3} />
           </mesh>
         </group>
       )}
 
-      {/* ── Mode accent arrows / cues ────────────────── */}
+      {/* ── Mode accent cues ────────────────────────── */}
       {mode === 'safe' && (
-        <group position={[0, BODY_H * 0.82, BODY_D / 2 + 0.03]}>
-          {/* Downward arrow cue — load → push → collect */}
-          {[0, -0.15, -0.3].map((yOff, i) => (
+        <group position={[0, BODY_H * 0.82, BODY_D / 2 + 0.035]}>
+          {[0, -0.14, -0.28].map((yOff, i) => (
             <mesh key={i} position={[0, yOff, 0]}>
-              <planeGeometry args={[0.06, 0.06]} />
+              <circleGeometry args={[0.022, 3]} />
               <meshStandardMaterial
                 color="#34c759"
                 emissive="#34c759"
-                emissiveIntensity={0.5}
+                emissiveIntensity={0.45}
                 side={THREE.DoubleSide}
               />
             </mesh>
