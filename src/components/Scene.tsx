@@ -15,6 +15,8 @@ interface SceneProps {
 }
 
 function SceneContent({ prototypeState }: SceneProps) {
+  const { isExploded } = prototypeState;
+
   return (
     <>
       {/* Soft studio lighting — key + fill + rim */}
@@ -67,13 +69,13 @@ function SceneContent({ prototypeState }: SceneProps) {
 
       <OrbitControls
         enablePan={false}
-        minDistance={3}
-        maxDistance={10}
+        minDistance={isExploded ? 4 : 3}
+        maxDistance={isExploded ? 14 : 10}
         minPolarAngle={Math.PI / 8}
         maxPolarAngle={Math.PI / 2.1}
-        autoRotate={!prototypeState.isAnimating}
+        autoRotate={!prototypeState.isAnimating && !isExploded}
         autoRotateSpeed={0.4}
-        target={[0, 1.6, 0]}
+        target={[0, isExploded ? 1.8 : 1.6, 0]}
       />
     </>
   );

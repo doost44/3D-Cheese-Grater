@@ -3,7 +3,8 @@
  * GrateTogether dual-mode cheese grater demo.
  *
  * Manages mode switching (safe ↔ pro), shutter open/close,
- * pusher position, cheese progress, and particle output.
+ * pusher position, cheese progress, particle output,
+ * exploded view, and internal path visibility.
  */
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { GraterMode, PrototypeState } from '../types';
@@ -98,6 +99,16 @@ export function usePrototypeState() {
     }));
   }, []);
 
+  /* ── Toggle exploded view ────────────────────────── */
+  const toggleExploded = useCallback(() => {
+    setState((prev) => ({ ...prev, isExploded: !prev.isExploded }));
+  }, []);
+
+  /* ── Toggle internal path indicators ─────────────── */
+  const toggleInternalPath = useCallback(() => {
+    setState((prev) => ({ ...prev, showInternalPath: !prev.showInternalPath }));
+  }, []);
+
   /* Clean up on unmount */
   useEffect(() => {
     return () => {
@@ -105,5 +116,5 @@ export function usePrototypeState() {
     };
   }, []);
 
-  return { state, setMode, activate, reset };
+  return { state, setMode, activate, reset, toggleExploded, toggleInternalPath };
 }
