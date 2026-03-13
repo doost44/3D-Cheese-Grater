@@ -214,7 +214,8 @@ export function GrateTogetherModel({ prototypeState }: Props) {
       shutterRef.current.position.y = shutterYRef.current;
     }
     if (pusherRef.current) {
-      const targetY = pusherEnabled ? -pusherPosition * (BODY_H * 0.55) : 0;
+      const baseY = BODY_H + 0.08;
+      const targetY = pusherEnabled ? baseY - pusherPosition * (BODY_H * 0.55) : baseY;
       pusherRef.current.position.y += (targetY - pusherRef.current.position.y) * Math.min(delta * 5, 1);
     }
     if (accentRef.current) {
@@ -307,18 +308,18 @@ export function GrateTogetherModel({ prototypeState }: Props) {
           />
         </mesh>
         {/* Horizontal parting seam at mid-body */}
-        <mesh position={[0, 0.12 + BODY_H * 0.52, BODY_D / 2 + 0.002]}>
+        <mesh position={[0, 0.12 + BODY_H * 0.52, BODY_D / 2 + BEVEL_R + 0.002]}>
           <planeGeometry args={[BASE_W * 0.7, 0.005]} />
           <meshStandardMaterial color={SEAM_COLOR} roughness={0.5} metalness={0.05} />
         </mesh>
         {/* Lower panel seam (below grater area) */}
-        <mesh position={[0, 0.12 + BODY_H * 0.12, BODY_D / 2 + 0.002]}>
+        <mesh position={[0, 0.12 + BODY_H * 0.12, BODY_D / 2 + BEVEL_R + 0.002]}>
           <planeGeometry args={[BASE_W * 0.85, 0.004]} />
           <meshStandardMaterial color={SEAM_COLOR} roughness={0.5} metalness={0.05} />
         </mesh>
 
         {/* ── Front control panel ─────────────────────── */}
-        <group position={[0, BODY_H * 0.72, BODY_D / 2 + 0.005]}>
+        <group position={[0, BODY_H * 0.72, BODY_D / 2 + BEVEL_R + 0.005]}>
           {/* Inset panel recess */}
           <mesh position={[0, 0, -0.006]}>
             <boxGeometry args={[BASE_W * 0.42, 0.2, 0.014]} />
@@ -384,7 +385,7 @@ export function GrateTogetherModel({ prototypeState }: Props) {
 
         {/* ── Mode accent cues ────────────────────────── */}
         {mode === 'safe' && (
-          <group position={[0, BODY_H * 0.82, BODY_D / 2 + 0.035]}>
+          <group position={[0, BODY_H * 0.82, BODY_D / 2 + BEVEL_R + 0.035]}>
             {[0, -0.14, -0.28].map((yOff, i) => (
               <mesh key={i} position={[0, yOff, 0]}>
                 <circleGeometry args={[0.022, 3]} />
@@ -477,7 +478,7 @@ export function GrateTogetherModel({ prototypeState }: Props) {
 
       {/* ── Front grating face (stainless steel) — grater plate module ── */}
       <ExplodeGroup offset={EXPLODE_OFFSETS.graterPlate} explodeAmount={explodeAmount}>
-        <group position={[0, BODY_H * 0.35, BODY_D / 2 + 0.003]}>
+        <group position={[0, BODY_H * 0.35, BODY_D / 2 + BEVEL_R + 0.003]}>
           {/* Inset recess behind grater */}
           <mesh position={[0, 0, -0.015]}>
             <boxGeometry args={[BASE_W * 0.62, PLATE_H + 0.02, 0.02]} />
@@ -522,7 +523,7 @@ export function GrateTogetherModel({ prototypeState }: Props) {
 
       {/* ── Safe-mode face shutter ──────────────────── */}
       <ExplodeGroup offset={EXPLODE_OFFSETS.shutterAssembly} explodeAmount={explodeAmount}>
-        <group ref={shutterRef} position={[0, 0, BODY_D / 2 + 0.02]}>
+        <group ref={shutterRef} position={[0, 0, BODY_D / 2 + BEVEL_R + 0.02]}>
           {/* Main shutter panel with thickness */}
           <mesh position={[0, BODY_H * 0.35, 0]}>
             <boxGeometry args={[BASE_W * 0.63, PLATE_H + 0.04, 0.032]} />
@@ -626,7 +627,7 @@ export function GrateTogetherModel({ prototypeState }: Props) {
       <ExplodeGroup offset={EXPLODE_OFFSETS.outerShell} explodeAmount={explodeAmount}>
         <mesh
           ref={binLatchRef}
-          position={[BASE_W * 0.32, BIN_H + 0.16, BODY_D / 2 + 0.01]}
+          position={[BASE_W * 0.32, BIN_H + 0.16, BODY_D / 2 + BEVEL_R + 0.01]}
         >
           <boxGeometry args={[0.05, 0.05, 0.025]} />
           <meshStandardMaterial
