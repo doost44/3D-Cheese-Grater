@@ -13,6 +13,10 @@ export interface PrototypeState {
   /** 0 = not started, 1 = complete */
   cheeseProgress: number;
   showCheeseOutput: boolean;
+  /** Exploded / deconstructed view active */
+  isExploded: boolean;
+  /** Show internal cheese path indicators */
+  showInternalPath: boolean;
 }
 
 export const INITIAL_STATE: PrototypeState = {
@@ -24,6 +28,8 @@ export const INITIAL_STATE: PrototypeState = {
   pusherPosition: 0,
   cheeseProgress: 0,
   showCheeseOutput: false,
+  isExploded: false,
+  showInternalPath: false,
 };
 
 /** Visual accent colours per mode */

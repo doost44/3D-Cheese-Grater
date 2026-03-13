@@ -4,7 +4,7 @@ import { usePrototypeState } from './hooks/usePrototypeState';
 import './App.css';
 
 function App() {
-  const { state, setMode, activate, reset } = usePrototypeState();
+  const { state, setMode, activate, reset, toggleExploded, toggleInternalPath } = usePrototypeState();
 
   return (
     <div className="app">
@@ -16,6 +16,8 @@ function App() {
         onModeChange={setMode}
         onActivate={activate}
         onReset={reset}
+        onToggleExploded={toggleExploded}
+        onToggleInternalPath={toggleInternalPath}
       />
     </div>
   );

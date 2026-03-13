@@ -5,6 +5,8 @@
  * - Mode toggle: SAFE / PRO
  * - Activate Mode button
  * - Reset Demo button
+ * - Exploded View toggle
+ * - Internal Path toggle
  * - Mode description and status
  */
 import type { GraterMode, PrototypeState } from '../types';
@@ -14,10 +16,12 @@ interface Props {
   onModeChange: (mode: GraterMode) => void;
   onActivate: () => void;
   onReset: () => void;
+  onToggleExploded: () => void;
+  onToggleInternalPath: () => void;
 }
 
-export function ControlPanel({ state, onModeChange, onActivate, onReset }: Props) {
-  const { mode, isAnimating } = state;
+export function ControlPanel({ state, onModeChange, onActivate, onReset, onToggleExploded, onToggleInternalPath }: Props) {
+  const { mode, isAnimating, isExploded, showInternalPath } = state;
   const isSafe = mode === 'safe';
 
   return (
@@ -75,6 +79,27 @@ export function ControlPanel({ state, onModeChange, onActivate, onReset }: Props
         <div className="status-row">
           <span className="status-dot green" />
           <span className="status-label">Bin: Inserted</span>
+        </div>
+
+        {/* View toggles */}
+        <div className="view-toggles">
+          <span className="panel-label">Presentation</span>
+          <button
+            className={`toggle-btn${isExploded ? ' active' : ''}`}
+            onClick={onToggleExploded}
+            aria-pressed={isExploded}
+          >
+            <span className="toggle-icon">{isExploded ? '🔧' : '📦'}</span>
+            <span>{isExploded ? 'Assembled View' : 'Exploded View'}</span>
+          </button>
+          <button
+            className={`toggle-btn path-btn${showInternalPath ? ' active' : ''}`}
+            onClick={onToggleInternalPath}
+            aria-pressed={showInternalPath}
+          >
+            <span className="toggle-icon">🧀</span>
+            <span>{showInternalPath ? 'Hide Cheese Path' : 'Show Cheese Path'}</span>
+          </button>
         </div>
       </aside>
 
