@@ -59,7 +59,7 @@ export function ControlPanel({ state, onModeChange, onActivate, onReset, onToggl
 
         <p className="mode-desc">
           {isSafe
-            ? 'Guided, enclosed grating — safe for ages 8–12 under supervision. Shutter closed, captive pusher enabled.'
+            ? 'Guided, enclosed grating. Shutter closed, captive pusher enabled.'
             : 'Open grater face for precision use. Shutter retracted, direct manual control.'}
         </p>
 
