@@ -9,12 +9,15 @@ import type { PrototypeState } from '../types';
 import { GrateTogetherModel } from './GrateTogetherModel';
 import { CheeseDemo } from './CheeseDemo';
 import { ModeIndicators } from './ModeIndicators';
+import { GraterSelector } from './GraterSelector';
+import type { GraterStyle } from '../types';
 
 interface SceneProps {
   prototypeState: PrototypeState;
+  onSelectGraterStyle?: (style: GraterStyle) => void;
 }
 
-function SceneContent({ prototypeState }: SceneProps) {
+function SceneContent({ prototypeState, onSelectGraterStyle }: SceneProps) {
   const { isExploded } = prototypeState;
 
   return (
@@ -52,6 +55,14 @@ function SceneContent({ prototypeState }: SceneProps) {
       {/* In-scene mode labels */}
       <ModeIndicators prototypeState={prototypeState} />
 
+      {/* Grater style selector tray */}
+      {onSelectGraterStyle && (
+        <GraterSelector
+          activeStyle={prototypeState.graterStyle}
+          onSelect={onSelectGraterStyle}
+        />
+      )}
+
       {/* Countertop surface */}
       <mesh position={[0, -0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[10, 8]} />
@@ -68,11 +79,13 @@ function SceneContent({ prototypeState }: SceneProps) {
       />
 
       <OrbitControls
-        enablePan={false}
-        minDistance={isExploded ? 4 : 3}
-        maxDistance={isExploded ? 14 : 10}
-        minPolarAngle={Math.PI / 8}
-        maxPolarAngle={Math.PI / 2.1}
+        enablePan={true}
+        enableDamping={true}
+        dampingFactor={0.08}
+        minDistance={2}
+        maxDistance={18}
+        minPolarAngle={0.05}
+        maxPolarAngle={Math.PI - 0.05}
         autoRotate={!prototypeState.isAnimating && !isExploded}
         autoRotateSpeed={0.4}
         target={[0, isExploded ? 1.8 : 1.6, 0]}
@@ -81,7 +94,7 @@ function SceneContent({ prototypeState }: SceneProps) {
   );
 }
 
-export function Scene({ prototypeState }: SceneProps) {
+export function Scene({ prototypeState, onSelectGraterStyle }: SceneProps) {
   return (
     <Canvas
       shadows
@@ -89,7 +102,7 @@ export function Scene({ prototypeState }: SceneProps) {
       style={{ background: 'transparent' }}
     >
       <Suspense fallback={null}>
-        <SceneContent prototypeState={prototypeState} />
+        <SceneContent prototypeState={prototypeState} onSelectGraterStyle={onSelectGraterStyle} />
       </Suspense>
     </Canvas>
   );

@@ -2,6 +2,16 @@
 
 export type GraterMode = "safe" | "pro";
 
+export type GraterStyle = "box" | "microplane" | "ribbon" | "drum" | "fine";
+
+export const GRATER_STYLE_LABELS: Record<GraterStyle, string> = {
+  box: "Box Grater",
+  microplane: "Microplane / Zester",
+  ribbon: "Ribbon / Slicer",
+  drum: "Drum / Rotary",
+  fine: "Fine Shred",
+};
+
 export interface PrototypeState {
   mode: GraterMode;
   isAnimating: boolean;
@@ -26,6 +36,12 @@ export interface PrototypeState {
   gratingCycle: number;
   /** True if cheese is being reset to top by spring */
   isResettingCheese: boolean;
+  /** Active grater plate style */
+  graterStyle: GraterStyle;
+  /** Demo status for banner display */
+  demoStatus: "idle" | "running" | "complete";
+  /** Accumulated cheese pile height (0–1) */
+  cheesePileLevel: number;
 }
 
 export const INITIAL_STATE: PrototypeState = {
@@ -44,6 +60,9 @@ export const INITIAL_STATE: PrototypeState = {
   followerSpringCompressed: false,
   gratingCycle: 0,
   isResettingCheese: false,
+  graterStyle: "box",
+  demoStatus: "idle",
+  cheesePileLevel: 0,
 };
 
 /** Visual accent colours per mode */

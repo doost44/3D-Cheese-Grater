@@ -38,18 +38,19 @@ const SPRING_COLOR = "#9da4aa";
 
 /* ── Exploded view offset config ─────────────────── */
 const EXPLODE_OFFSETS = {
-  // Keep shell/frame centered; fan internal parts outward for a diagram-like exploded read.
+  // Internal cheese-path parts explode forward (positive Z) so the
+  // path reads top-to-bottom in front of the body shell.
   topFunnel: [0, 1.9, 0] as [number, number, number],
   outerShell: [0, 0, 0] as [number, number, number], // anchor
-  shutterAssembly: [0, 0.1, 1.45] as [number, number, number],
-  graterPlate: [0.25, -0.05, 1.05] as [number, number, number],
-  feedChannel: [1.05, 0.5, -0.1] as [number, number, number],
-  redirector: [0.55, -0.2, 0.65] as [number, number, number],
-  internalGrater: [1.2, -0.45, 0.95] as [number, number, number],
-  safeBarrier: [-1.0, 0.25, 1.1] as [number, number, number],
-  pusherAssembly: [0, 1.45, -0.65] as [number, number, number],
-  internalFrame: [0, 0, -0.1] as [number, number, number], // center anchor
-  collectionBin: [0, -0.45, 1.9] as [number, number, number],
+  shutterAssembly: [-1.1, 0.1, 0.6] as [number, number, number],
+  graterPlate: [-1.1, -0.3, 0.6] as [number, number, number],
+  feedChannel: [0, 0.3, 1.8] as [number, number, number],       // forward
+  redirector: [0, -0.25, 1.6] as [number, number, number],      // forward, below channel
+  internalGrater: [0, -0.55, 1.8] as [number, number, number],  // forward, below redirector
+  safeBarrier: [-1.0, 0.25, 0.6] as [number, number, number],
+  pusherAssembly: [0, 1.45, 1.4] as [number, number, number],   // forward, above channel
+  internalFrame: [0, 0, -0.1] as [number, number, number],
+  collectionBin: [0, -0.45, 2.2] as [number, number, number],   // forward, at bottom
   baseAssembly: [0, -0.75, 0] as [number, number, number],
 };
 
@@ -91,33 +92,103 @@ function GraterHoles({
   height,
   rows,
   cols,
+  style = "box",
 }: {
   width: number;
   height: number;
   rows: number;
   cols: number;
+  style?: import("../types").GraterStyle;
 }) {
-  const positions = useMemo(() => {
-    const pts: [number, number, number][] = [];
-    for (let r = 0; r < rows; r++) {
-      const xOffset = (r % 2) * ((width * 0.8) / (cols - 1)) * 0.5;
-      for (let c = 0; c < cols; c++) {
-        const x = (c / (cols - 1) - 0.5) * width * 0.8 + xOffset;
-        const y = (r / (rows - 1) - 0.5) * height * 0.8;
-        if (Math.abs(x) > width * 0.42) continue;
-        const size = 0.02 + ((r * cols + c) % 5) * 0.003;
-        pts.push([x, y, size]);
+  /* Each style produces a list of hole descriptors: position, size, and shape */
+  const holes = useMemo(() => {
+    const pts: { x: number; y: number; w: number; h: number; round: boolean }[] = [];
+
+    switch (style) {
+      case "microplane": {
+        // Dense tiny etched holes
+        const mr = rows + 6;
+        const mc = cols + 4;
+        for (let r = 0; r < mr; r++) {
+          const xOff = (r % 2) * ((width * 0.8) / (mc - 1)) * 0.5;
+          for (let c = 0; c < mc; c++) {
+            const x = (c / (mc - 1) - 0.5) * width * 0.8 + xOff;
+            const y = (r / (mr - 1) - 0.5) * height * 0.8;
+            if (Math.abs(x) > width * 0.42) continue;
+            pts.push({ x, y, w: 0.012, h: 0.012, round: true });
+          }
+        }
+        break;
+      }
+      case "ribbon": {
+        // Wide horizontal slots for shaving
+        const slotRows = Math.max(4, Math.floor(rows / 2));
+        for (let r = 0; r < slotRows; r++) {
+          const y = (r / (slotRows - 1) - 0.5) * height * 0.75;
+          pts.push({ x: 0, y, w: width * 0.6, h: 0.022, round: false });
+        }
+        break;
+      }
+      case "drum": {
+        // Concentric circular pattern
+        const rings = 4;
+        for (let ri = 1; ri <= rings; ri++) {
+          const radius = (ri / rings) * Math.min(width, height) * 0.35;
+          const count = ri * 6;
+          for (let i = 0; i < count; i++) {
+            const angle = (i / count) * Math.PI * 2;
+            const x = Math.cos(angle) * radius;
+            const y = Math.sin(angle) * radius;
+            pts.push({ x, y, w: 0.018, h: 0.018, round: true });
+          }
+        }
+        // Center hole
+        pts.push({ x: 0, y: 0, w: 0.025, h: 0.025, round: true });
+        break;
+      }
+      case "fine": {
+        // Dense diamond-shaped small holes
+        const fr = rows + 4;
+        const fc = cols + 2;
+        for (let r = 0; r < fr; r++) {
+          const xOff = (r % 2) * ((width * 0.8) / (fc - 1)) * 0.5;
+          for (let c = 0; c < fc; c++) {
+            const x = (c / (fc - 1) - 0.5) * width * 0.8 + xOff;
+            const y = (r / (fr - 1) - 0.5) * height * 0.8;
+            if (Math.abs(x) > width * 0.42) continue;
+            pts.push({ x, y, w: 0.014, h: 0.02, round: false });
+          }
+        }
+        break;
+      }
+      default: {
+        // "box" — original staggered round holes
+        for (let r = 0; r < rows; r++) {
+          const xOff = (r % 2) * ((width * 0.8) / (cols - 1)) * 0.5;
+          for (let c = 0; c < cols; c++) {
+            const x = (c / (cols - 1) - 0.5) * width * 0.8 + xOff;
+            const y = (r / (rows - 1) - 0.5) * height * 0.8;
+            if (Math.abs(x) > width * 0.42) continue;
+            const size = 0.02 + ((r * cols + c) % 5) * 0.003;
+            pts.push({ x, y, w: size, h: size, round: true });
+          }
+        }
+        break;
       }
     }
     return pts;
-  }, [width, height, rows, cols]);
+  }, [width, height, rows, cols, style]);
 
   return (
     <group>
-      {positions.map(([x, y, size], i) => (
-        <group key={i} position={[x, y, 0]}>
+      {holes.map((hole, i) => (
+        <group key={i} position={[hole.x, hole.y, 0]}>
           <mesh>
-            <circleGeometry args={[size, 6]} />
+            {hole.round ? (
+              <circleGeometry args={[hole.w, 6]} />
+            ) : (
+              <planeGeometry args={[hole.w, hole.h]} />
+            )}
             <meshStandardMaterial
               color="#1e1e1e"
               metalness={0.4}
@@ -125,7 +196,11 @@ function GraterHoles({
             />
           </mesh>
           <mesh position={[0, 0, -0.001]}>
-            <ringGeometry args={[size, size + 0.005, 6]} />
+            {hole.round ? (
+              <ringGeometry args={[hole.w, hole.w + 0.005, 6]} />
+            ) : (
+              <planeGeometry args={[hole.w + 0.008, hole.h + 0.006]} />
+            )}
             <meshStandardMaterial
               color={STEEL_COLOR}
               metalness={0.9}
@@ -224,6 +299,7 @@ export function GrateTogetherModel({ prototypeState }: Props) {
     followerPlatePosition,
     followerSpringCompressed,
     isResettingCheese,
+    graterStyle,
   } = prototypeState;
   const modeAccentColor = MODE_ACCENT[mode];
 
@@ -276,91 +352,6 @@ export function GrateTogetherModel({ prototypeState }: Props) {
     }
     // No animation for follower plate here; handled by state
   });
-  {
-    /* ── Follower plate and spring (new mechanism) ─────────────── */
-  }
-  <ExplodeGroup
-    offset={EXPLODE_OFFSETS.feedChannel}
-    explodeAmount={explodeAmount}
-  >
-    {/* Follower plate and spring are always visible in exploded view, or when animating in safe mode */}
-    {(isExploded || mode === "safe") && (
-      <group>
-        {/* Follower plate (moves from top to bottom of feed channel) */}
-        <group
-          position={[
-            0,
-            BODY_H * 0.88 - followerPlatePosition * (BODY_H * 0.55),
-            -0.02,
-          ]}
-        >
-          <mesh>
-            <boxGeometry args={[0.24, 0.04, 0.19]} />
-            <meshStandardMaterial
-              color="#ffe07a"
-              roughness={0.32}
-              metalness={0.12}
-            />
-          </mesh>
-          {/* Plate face accent */}
-          <mesh position={[0, 0, 0.1]}>
-            <planeGeometry args={[0.22, 0.035]} />
-            <meshStandardMaterial
-              color="#f5d060"
-              roughness={0.18}
-              metalness={0.08}
-            />
-          </mesh>
-        </group>
-        {/* Spring (compresses at bottom of stroke) */}
-        <group
-          position={[
-            0,
-            BODY_H * 0.88 - followerPlatePosition * (BODY_H * 0.55) + 0.08,
-            0,
-          ]}
-        >
-          {[0, 1, 2, 3, 4, 5].map((i) => (
-            <mesh
-              key={`follower-spring-${i}`}
-              position={[0, -i * 0.018, 0]}
-              rotation={[Math.PI / 2, 0, 0]}
-            >
-              <torusGeometry
-                args={[0.06, followerSpringCompressed ? 0.006 : 0.012, 8, 18]}
-              />
-              <meshStandardMaterial
-                color={SPRING_COLOR}
-                roughness={0.35}
-                metalness={0.55}
-              />
-            </mesh>
-          ))}
-        </group>
-        {/* Upward motion cue when resetting */}
-        {isResettingCheese && (
-          <group
-            position={[
-              0.13,
-              BODY_H * 0.88 - followerPlatePosition * (BODY_H * 0.55),
-              0,
-            ]}
-          >
-            <mesh rotation={[0, 0, Math.PI / 2]}>
-              <coneGeometry args={[0.025, 0.06, 3]} />
-              <meshStandardMaterial
-                color="#8fc9ff"
-                emissive="#8fc9ff"
-                emissiveIntensity={0.45}
-                transparent
-                opacity={0.65}
-              />
-            </mesh>
-          </group>
-        )}
-      </group>
-    )}
-  </ExplodeGroup>;
 
   const bodyGeometry = useMemo(() => createBodyGeometry(), []);
 
@@ -718,6 +709,92 @@ export function GrateTogetherModel({ prototypeState }: Props) {
         )}
       </ExplodeGroup>
 
+      {/* ── Follower plate, return spring & cheese carriage ── */}
+      <ExplodeGroup
+        offset={EXPLODE_OFFSETS.feedChannel}
+        explodeAmount={explodeAmount}
+      >
+        {/* Visible in exploded view or during safe-mode operation */}
+        {(isExploded || mode === "safe") && (
+          <group position={[0, 0.12, -0.02]}>
+            {/* Follower plate — spring-loaded, pushes cheese back to top after each stroke */}
+            <group
+              position={[
+                0,
+                BODY_H * 0.88 - followerPlatePosition * (BODY_H * 0.55),
+                0,
+              ]}
+            >
+              <mesh>
+                <boxGeometry args={[0.24, 0.04, 0.19]} />
+                <meshStandardMaterial
+                  color="#ffe07a"
+                  roughness={0.32}
+                  metalness={0.12}
+                />
+              </mesh>
+              {/* Plate face accent (front-facing) */}
+              <mesh position={[0, 0, 0.1]}>
+                <planeGeometry args={[0.22, 0.035]} />
+                <meshStandardMaterial
+                  color="#f5d060"
+                  roughness={0.18}
+                  metalness={0.08}
+                />
+              </mesh>
+            </group>
+
+            {/* Return spring — sits above follower plate, compresses at end of stroke */}
+            <group
+              position={[
+                0,
+                BODY_H * 0.88 - followerPlatePosition * (BODY_H * 0.55) + 0.08,
+                0,
+              ]}
+            >
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <mesh
+                  key={`follower-spring-${i}`}
+                  position={[0, -i * (followerSpringCompressed ? 0.008 : 0.018), 0]}
+                  rotation={[Math.PI / 2, 0, 0]}
+                >
+                  <torusGeometry
+                    args={[0.06, followerSpringCompressed ? 0.006 : 0.012, 8, 18]}
+                  />
+                  <meshStandardMaterial
+                    color={SPRING_COLOR}
+                    roughness={0.35}
+                    metalness={0.55}
+                  />
+                </mesh>
+              ))}
+            </group>
+
+            {/* Upward arrow cue — visible during spring reset phase */}
+            {isResettingCheese && (
+              <group
+                position={[
+                  0.16,
+                  BODY_H * 0.88 - followerPlatePosition * (BODY_H * 0.55),
+                  0,
+                ]}
+              >
+                <mesh rotation={[0, 0, Math.PI / 2]}>
+                  <coneGeometry args={[0.025, 0.06, 3]} />
+                  <meshStandardMaterial
+                    color="#8fc9ff"
+                    emissive="#8fc9ff"
+                    emissiveIntensity={0.45}
+                    transparent
+                    opacity={0.65}
+                  />
+                </mesh>
+              </group>
+            )}
+          </group>
+        )}
+      </ExplodeGroup>
+
       {/* ── Mechanical redirector block (expanded emphasis) ── */}
       <ExplodeGroup
         offset={EXPLODE_OFFSETS.redirector}
@@ -766,7 +843,7 @@ export function GrateTogetherModel({ prototypeState }: Props) {
               />
             </mesh>
             <group position={[0, 0, 0.01]}>
-              <GraterHoles width={0.56} height={0.38} rows={10} cols={8} />
+              <GraterHoles width={0.56} height={0.38} rows={10} cols={8} style={graterStyle} />
             </group>
           </group>
         )}
@@ -835,6 +912,7 @@ export function GrateTogetherModel({ prototypeState }: Props) {
               height={PLATE_H}
               rows={14}
               cols={10}
+              style={graterStyle}
             />
           </group>
           {/* Frame border around grater plate */}

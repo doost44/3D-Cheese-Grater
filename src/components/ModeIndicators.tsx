@@ -102,8 +102,9 @@ export function ModeIndicators({ prototypeState }: Props) {
             <div style={labelStyle}>Internal Frame</div>
           </Html>
 
+          {/* Labels positioned to match forward-facing explode layout */}
           <Html
-            position={[1.05, BODY_H * 0.62 + 0.5, -0.12]}
+            position={[0.35, BODY_H * 0.62 + 0.3, 1.8]}
             center
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
@@ -111,7 +112,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           </Html>
 
           <Html
-            position={[0, BODY_H + 0.08 + 1.45, -0.65]}
+            position={[0, BODY_H + 0.08 + 1.45, 1.4]}
             center
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
@@ -119,15 +120,15 @@ export function ModeIndicators({ prototypeState }: Props) {
           </Html>
 
           <Html
-            position={[0.06, BODY_H + 0.58, -0.65]}
+            position={[0.2, BODY_H + 0.58, 1.4]}
             center
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
-            <div style={labelStyleSmall}>Return Spring</div>
+            <div style={labelStyleSmall}>Pusher Return Spring</div>
           </Html>
 
           <Html
-            position={[0, BODY_H * 0.35 + 0.1, BODY_D / 2 + 0.35 + 1.45]}
+            position={[-1.1, BODY_H * 0.35 + 0.35, 0.6]}
             center
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
@@ -135,7 +136,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           </Html>
 
           <Html
-            position={[1.22, BODY_H * 0.27, BODY_D / 2 + 0.95]}
+            position={[0.35, BODY_H * 0.27 - 0.55, 1.8]}
             center
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
@@ -143,14 +144,13 @@ export function ModeIndicators({ prototypeState }: Props) {
           </Html>
 
           <Html
-            position={[0.56, BODY_H * 0.38 - 0.2, BODY_D / 2 + 0.65]}
+            position={[0.3, BODY_H * 0.38 - 0.25, 1.6]}
             center
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={labelStyle}>Force Redirector</div>
           </Html>
 
-          {/* Status/set indicators: moved to right side, vertically stacked */}
           <Html
             position={[BASE_W * 0.7, BODY_H * 0.82, BODY_D / 2 + 0.15]}
             center
@@ -159,13 +159,25 @@ export function ModeIndicators({ prototypeState }: Props) {
             <div style={labelStyleSmall}>Bin Interlock</div>
           </Html>
 
-          {/* Add more status indicators here if needed, stacked below */}
-
-          {/* Lightweight mechanism walkthrough cues for critique/presentation */}
-
-          {/* Mechanism walkthrough labels: moved to left side, vertically stacked */}
           <Html
-            position={[-BASE_W * 0.85, BODY_H + 1.7, -0.24]}
+            position={[0.3, BODY_H * 0.82 + 0.3, 1.8]}
+            center
+            style={{ pointerEvents: "none", userSelect: "none" }}
+          >
+            <div style={labelStyleSmall}>Spring-Loaded Follower Plate</div>
+          </Html>
+
+          <Html
+            position={[0.3, BODY_H * 0.92 + 0.3, 1.8]}
+            center
+            style={{ pointerEvents: "none", userSelect: "none" }}
+          >
+            <div style={labelStyleSmall}>Follower Return Spring</div>
+          </Html>
+
+          {/* Mechanism walkthrough labels: left side of exploded parts */}
+          <Html
+            position={[-0.8, BODY_H + 1.7, 1.8]}
             center
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
@@ -173,7 +185,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           </Html>
 
           <Html
-            position={[-BASE_W * 0.85, BODY_H + 1.45, -0.24]}
+            position={[-0.8, BODY_H + 1.45, 1.8]}
             center
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
@@ -181,7 +193,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           </Html>
 
           <Html
-            position={[-BASE_W * 0.85, BODY_H + 1.2, -0.24]}
+            position={[-0.8, BODY_H + 1.2, 1.8]}
             center
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
@@ -191,7 +203,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           </Html>
 
           <Html
-            position={[-BASE_W * 0.85, BODY_H + 0.95, -0.24]}
+            position={[-0.8, BODY_H + 0.95, 1.8]}
             center
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
@@ -199,12 +211,12 @@ export function ModeIndicators({ prototypeState }: Props) {
           </Html>
 
           <Html
-            position={[-BASE_W * 0.85, BODY_H + 0.7, -0.24]}
+            position={[-0.8, BODY_H + 0.7, 1.8]}
             center
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={flowStyleSmall}>
-              5) Pusher resets up (^), cheese keeps advancing down
+              5) Spring returns follower plate + cheese to top (^)
             </div>
           </Html>
 

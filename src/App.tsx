@@ -4,12 +4,12 @@ import { usePrototypeState } from './hooks/usePrototypeState';
 import './App.css';
 
 function App() {
-  const { state, setMode, activate, reset, toggleExploded, toggleInternalPath } = usePrototypeState();
+  const { state, setMode, activate, reset, toggleExploded, toggleInternalPath, setGraterStyle } = usePrototypeState();
 
   return (
     <div className="app">
       <div className="canvas-wrap">
-        <Scene prototypeState={state} />
+        <Scene prototypeState={state} onSelectGraterStyle={setGraterStyle} />
       </div>
       <ControlPanel
         state={state}

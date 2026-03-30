@@ -167,6 +167,8 @@
 .status-dot.green { background: #34c759; box-shadow: 0 0 4px #34c75980; }
 .status-dot.red { background: #d63031; box-shadow: 0 0 4px #d6303180; }
 .status-dot.gray { background: #999; }
+.status-dot.yellow { background: #f5a623; box-shadow: 0 0 6px #f5a62380; animation: pulse-dot 0.8s ease-in-out infinite; }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 
 .status-label {
   font-size: 0.62rem;

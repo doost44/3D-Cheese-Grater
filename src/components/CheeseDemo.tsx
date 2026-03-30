@@ -21,6 +21,11 @@ const BODY_H = BASE_W * 2.2;
 const BODY_D = 0.9;
 const BIN_H = BODY_H * 0.25;
 
+/* Feed channel explode offset — must match GrateTogetherModel EXPLODE_OFFSETS.feedChannel */
+const FEED_CHANNEL_EXPLODE: [number, number, number] = [0, 0.3, 1.8];
+/* Collection bin explode offset */
+const BIN_EXPLODE: [number, number, number] = [0, -0.45, 2.2];
+
 /* ── Cheese block size ─────────────────────────────── */
 const CHEESE_W = 0.26;
 const CHEESE_H = 0.22;
@@ -59,10 +64,13 @@ export function CheeseDemo({ prototypeState }: Props) {
     cheeseProgress,
     showCheeseOutput,
     isAnimating,
+    isExploded,
     followerPlatePosition,
+    cheesePileLevel,
   } = prototypeState;
 
   const cheeseRef = useRef<THREE.Mesh>(null);
+  const cheeseGroupRef = useRef<THREE.Group>(null);
   const instanceRef = useRef<THREE.InstancedMesh>(null);
   const particles = useRef<Particle[]>(
     Array.from({ length: MAX_PARTICLES }, makeParticle),
@@ -70,6 +78,10 @@ export function CheeseDemo({ prototypeState }: Props) {
   const nextSlot = useRef(0);
   const spawnTimer = useRef(0);
   const dummy = useMemo(() => new THREE.Object3D(), []);
+  /* Track current explode offset for smooth interpolation */
+  const explodeOffset = useRef([0, 0, 0]);
+  const pileRef = useRef<THREE.Mesh>(null);
+  const currentPile = useRef(0);
 
   /* Compute cheese position based on mode and follower plate (safe mode) */
   const getCheesePosition = (
@@ -94,11 +106,13 @@ export function CheeseDemo({ prototypeState }: Props) {
             );
       return new THREE.Vector3(0, y, z);
     } else {
-      // Cheese approaches from front, presses against exposed grater plate
-      const startZ = BODY_D / 2 + 0.4;
-      const endZ = BODY_D / 2 + 0.05;
+      // Pro mode: cheese held against exposed grater face from front
+      // Wider stroke so the cheese block is clearly visible outside the grater
+      const startZ = BODY_D / 2 + 0.65;
+      const endZ = BODY_D / 2 + 0.1;
       const z = THREE.MathUtils.lerp(startZ, endZ, progress);
-      const y = BODY_H * 0.35;
+      // Slight downward slide as cheese is grated away
+      const y = BODY_H * 0.38 - progress * 0.15;
       return new THREE.Vector3(0, y, z);
     }
   };
@@ -123,26 +137,53 @@ export function CheeseDemo({ prototypeState }: Props) {
   };
 
   useFrame((_, delta) => {
+    /* ── Smoothly move cheese group to match exploded feed channel offset ── */
+    if (cheeseGroupRef.current) {
+      const target = isExploded ? FEED_CHANNEL_EXPLODE : [0, 0, 0];
+      const speed = Math.min(delta * 4, 1);
+      explodeOffset.current[0] += (target[0] - explodeOffset.current[0]) * speed;
+      explodeOffset.current[1] += (target[1] - explodeOffset.current[1]) * speed;
+      explodeOffset.current[2] += (target[2] - explodeOffset.current[2]) * speed;
+      cheeseGroupRef.current.position.set(
+        explodeOffset.current[0],
+        explodeOffset.current[1],
+        explodeOffset.current[2],
+      );
+    }
+
     /* ── Move cheese block ──────────────────────── */
     if (cheeseRef.current) {
       if (mode === "safe") {
-        // Cheese follows follower plate in safe mode
+        // Cheese is always visible in safe mode — sits on follower plate
+        // During animation it follows the plate; at rest it sits at top position
         const target = getCheesePosition(
           cheeseProgress,
           mode,
           followerPlatePosition,
         );
         cheeseRef.current.position.lerp(target, Math.min(delta * 8, 1));
+        cheeseRef.current.scale.set(1, 1, 1);
         cheeseRef.current.visible = true;
-      } else if (cheeseProgress > 0) {
-        // Pro mode: use progress
+      } else if (isAnimating || cheeseProgress > 0) {
+        // Pro mode: visible during demo, larger block held from outside
         const target = getCheesePosition(cheeseProgress, mode, 0);
         cheeseRef.current.position.lerp(target, Math.min(delta * 8, 1));
+        // Scale up for pro mode visibility (hand-held wedge)
+        const proScale = 2.2;
+        cheeseRef.current.scale.set(proScale, proScale, proScale);
         cheeseRef.current.visible = true;
       } else {
-        // Park cheese out of view
         cheeseRef.current.visible = false;
+        cheeseRef.current.scale.set(1, 1, 1);
       }
+    }
+
+    /* ── Animate cheese pile in collection bin ────── */
+    if (pileRef.current) {
+      const targetScale = cheesePileLevel;
+      currentPile.current += (targetScale - currentPile.current) * Math.min(delta * 3, 1);
+      pileRef.current.scale.y = Math.max(currentPile.current, 0.001);
+      pileRef.current.visible = currentPile.current > 0.01;
     }
 
     /* ── Spawn grated cheese particles ──────────── */
@@ -154,6 +195,10 @@ export function CheeseDemo({ prototypeState }: Props) {
         nextSlot.current++;
         p.active = true;
         p.pos.copy(getOutputPosition(mode));
+        // Offset particle spawn to match exploded view position
+        p.pos.x += explodeOffset.current[0];
+        p.pos.y += explodeOffset.current[1];
+        p.pos.z += explodeOffset.current[2];
         p.vel.set(
           (Math.random() - 0.5) * 0.2,
           -0.5 - Math.random() * 0.8,
@@ -213,22 +258,38 @@ export function CheeseDemo({ prototypeState }: Props) {
 
   return (
     <>
-      {/* Cheese block */}
+      {/* Cheese block — moves with exploded feed channel offset */}
+      <group ref={cheeseGroupRef}>
+        <mesh
+          ref={cheeseRef}
+          position={startPos.toArray()}
+          visible={false}
+          castShadow
+        >
+          <boxGeometry args={[CHEESE_W, CHEESE_H, CHEESE_D]} />
+          <meshStandardMaterial
+            color={CHEESE_COLOR}
+            roughness={0.72}
+            metalness={0}
+          />
+        </mesh>
+      </group>
+
+      {/* Cheese pile accumulation in collection bin */}
       <mesh
-        ref={cheeseRef}
-        position={startPos.toArray()}
+        ref={pileRef}
+        position={[0, 0.15, BODY_D / 2 + 0.13]}
         visible={false}
-        castShadow
       >
-        <boxGeometry args={[CHEESE_W, CHEESE_H, CHEESE_D]} />
+        <cylinderGeometry args={[BASE_W * 0.22, BASE_W * 0.25, BIN_H * 0.6, 12]} />
         <meshStandardMaterial
-          color={CHEESE_COLOR}
-          roughness={0.72}
+          color={GRATED_COLOR}
+          roughness={0.9}
           metalness={0}
         />
       </mesh>
 
-      {/* Grated cheese particles */}
+      {/* Grated cheese particles (world-space, offset applied at spawn) */}
       <instancedMesh
         ref={instanceRef}
         args={[undefined, undefined, MAX_PARTICLES]}

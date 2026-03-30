@@ -10,6 +10,7 @@
  * - Mode description and status
  */
 import type { GraterMode, PrototypeState } from '../types';
+import { GRATER_STYLE_LABELS } from '../types';
 
 interface Props {
   state: PrototypeState;
@@ -71,14 +72,20 @@ export function ControlPanel({ state, onModeChange, onActivate, onReset, onToggl
           </span>
         </div>
         <div className="status-row">
-          <span className={`status-dot ${isSafe ? 'green' : 'gray'}`} />
+          <span className={`status-dot ${isAnimating ? 'yellow' : isSafe ? 'green' : 'gray'}`} />
           <span className="status-label">
-            Pusher: {isSafe ? 'Engaged' : 'Parked'}
+            Pusher: {isAnimating ? 'Active' : isSafe ? 'Engaged' : 'Parked'}
           </span>
         </div>
         <div className="status-row">
           <span className="status-dot green" />
           <span className="status-label">Bin: Inserted</span>
+        </div>
+        <div className="status-row">
+          <span className="status-dot green" />
+          <span className="status-label">
+            Grater: {GRATER_STYLE_LABELS[state.graterStyle]}
+          </span>
         </div>
 
         {/* View toggles */}
@@ -108,12 +115,14 @@ export function ControlPanel({ state, onModeChange, onActivate, onReset, onToggl
         <button
           className={`grate-btn ${isSafe ? 'safe-btn' : 'pro-btn'}${isAnimating ? ' grating' : ''}`}
           onClick={onActivate}
-          disabled={isAnimating}
+          disabled={state.demoStatus === 'running'}
           aria-label={`Activate ${mode} mode demonstration`}
         >
-          {isAnimating
-            ? '⏳ Demonstrating…'
-            : `▶ Activate ${isSafe ? 'Safe' : 'Pro'} Mode`}
+          {state.demoStatus === 'running'
+            ? '⏳ DEMO RUNNING…'
+            : state.demoStatus === 'complete'
+              ? '✅ DEMO COMPLETE'
+              : `▶ Activate ${isSafe ? 'Safe' : 'Pro'} Mode`}
         </button>
         <button
           className="reset-btn"
