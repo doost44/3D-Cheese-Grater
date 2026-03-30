@@ -6,17 +6,22 @@
  * pusher position, cheese progress, particle output,
  * exploded view, and internal path visibility.
  */
-import { useState, useCallback, useRef, useEffect } from 'react';
-import type { GraterMode, PrototypeState } from '../types';
-import { INITIAL_STATE } from '../types';
+import { useState, useCallback, useRef, useEffect } from "react";
+import type { GraterMode, PrototypeState } from "../types";
+import { INITIAL_STATE } from "../types";
 
 /** Duration of the cheese-grating demonstration in ms */
 const DEMO_DURATION = 4000;
+/** Fraction of safe-path travel advanced by each push cycle */
+const SAFE_ADVANCE_PER_PUSH = 0.32;
+/** Maximum safe-mode travel to preserve the safety stub */
+const SAFE_MAX_TRAVEL = 0.9;
 
 export function usePrototypeState() {
   const [state, setState] = useState<PrototypeState>(INITIAL_STATE);
   const animFrameRef = useRef<number>(0);
   const startTimeRef = useRef<number>(0);
+  const safeStartProgressRef = useRef<number>(0);
 
   /* ── Mode switch ─────────────────────────────────── */
   const setMode = useCallback((mode: GraterMode) => {
@@ -29,8 +34,8 @@ export function usePrototypeState() {
       ...prev,
       mode,
       isAnimating: false,
-      shutterOpen: mode === 'pro',
-      pusherEnabled: mode === 'safe',
+      shutterOpen: mode === "pro",
+      pusherEnabled: mode === "safe",
       binInserted: true,
       pusherPosition: 0,
       cheeseProgress: 0,
@@ -40,46 +45,127 @@ export function usePrototypeState() {
 
   /* ── Activate demo ───────────────────────────────── */
   const activate = useCallback(() => {
+    let canStart = false;
     setState((prev) => {
       if (prev.isAnimating) return prev;
+      canStart = true;
+      safeStartProgressRef.current =
+        prev.mode === "safe" ? prev.cheeseProgress : 0;
       return {
         ...prev,
         isAnimating: true,
-        cheeseProgress: 0,
+        cheeseProgress: prev.mode === "safe" ? prev.cheeseProgress : 0,
         showCheeseOutput: false,
         pusherPosition: 0,
+        followerPlatePosition: 0,
+        followerSpringCompressed: false,
+        gratingCycle: 0,
+        isResettingCheese: false,
       };
     });
 
-    startTimeRef.current = performance.now();
+    if (!canStart) return;
 
-    const tick = () => {
-      const elapsed = performance.now() - startTimeRef.current;
-      const t = Math.min(elapsed / DEMO_DURATION, 1);
+    // --- New repeated grating cycle logic ---
+    let cycle = 0;
+    let cheeseProgress = safeStartProgressRef.current;
+    let followerPlatePosition = 0;
+    let followerSpringCompressed = false;
+    let isResettingCheese = false;
+    let showCheeseOutput = false;
+    let animating = true;
 
-      setState((prev) => {
-        if (!prev.isAnimating) return prev;
+    const CYCLE_DURATION = 1.2; // seconds per grate cycle
+    const RESET_DURATION = 0.5; // seconds for spring reset
+    const ADVANCE_PER_CYCLE = SAFE_ADVANCE_PER_PUSH;
+    const MAX_TRAVEL = SAFE_MAX_TRAVEL;
+    let lastTimestamp = performance.now();
+    let elapsedTotal = 0;
 
-        const isSafe = prev.mode === 'safe';
-        // In safe mode the cheese stops at ~85% travel (safe stub)
-        const maxTravel = isSafe ? 0.85 : 1.0;
-        const progress = Math.min(t, maxTravel);
+    function tick() {
+      const now = performance.now();
+      const delta = (now - lastTimestamp) / 1000;
+      lastTimestamp = now;
+      elapsedTotal += delta;
 
-        return {
+      // Each cycle: downstroke (compress spring, move cheese), then spring reset
+      let cycleElapsed = elapsedTotal % (CYCLE_DURATION + RESET_DURATION);
+      cycle = Math.floor(elapsedTotal / (CYCLE_DURATION + RESET_DURATION));
+
+      // Compute cheese progress for this cycle
+      let cheeseStart =
+        safeStartProgressRef.current + cycle * ADVANCE_PER_CYCLE;
+      cheeseProgress = Math.min(cheeseStart, MAX_TRAVEL);
+      if (cheeseProgress >= MAX_TRAVEL - 0.001) {
+        animating = false;
+        followerPlatePosition = 0;
+        followerSpringCompressed = false;
+        isResettingCheese = false;
+        showCheeseOutput = false;
+        setState((prev) => ({
           ...prev,
-          cheeseProgress: progress,
-          pusherPosition: isSafe ? progress : 0,
-          showCheeseOutput: progress > 0.08,
-          isAnimating: t < 1,
-        };
-      });
+          cheeseProgress,
+          followerPlatePosition,
+          followerSpringCompressed,
+          isResettingCheese,
+          gratingCycle: cycle,
+          showCheeseOutput,
+          isAnimating: false,
+        }));
+        animFrameRef.current = 0;
+        return;
+      }
 
-      if (t < 1) {
+      let pusherPos = 0;
+      if (cycleElapsed < CYCLE_DURATION) {
+        // Downstroke: follower plate and pusher move down, cheese advances
+        const t = cycleElapsed / CYCLE_DURATION;
+        followerPlatePosition = t;
+        followerSpringCompressed = t > 0.85;
+        isResettingCheese = false;
+        // Cheese moves with follower plate during downstroke
+        const cheeseT = t;
+        cheeseProgress = Math.min(
+          cheeseStart + cheeseT * ADVANCE_PER_CYCLE,
+          MAX_TRAVEL,
+        );
+        showCheeseOutput = t > 0.6 && cheeseProgress > 0.52;
+        // Pusher moves down in sync
+        pusherPos = t;
+      } else {
+        // Spring reset: follower plate and cheese return to top, pusher returns up
+        const t = (cycleElapsed - CYCLE_DURATION) / RESET_DURATION;
+        followerPlatePosition = 1 - t;
+        followerSpringCompressed = false;
+        isResettingCheese = true;
+        showCheeseOutput = false;
+        // Cheese moves up with follower plate
+        cheeseProgress = Math.min(
+          cheeseStart + (1 - t) * ADVANCE_PER_CYCLE,
+          MAX_TRAVEL,
+        );
+        // Pusher returns up
+        pusherPos = 1 - t;
+      }
+
+      setState((prev) => ({
+        ...prev,
+        cheeseProgress,
+        followerPlatePosition,
+        followerSpringCompressed,
+        isResettingCheese,
+        gratingCycle: cycle,
+        showCheeseOutput,
+        isAnimating: animating,
+        pusherPosition: pusherPos,
+      }));
+
+      if (animating) {
         animFrameRef.current = requestAnimationFrame(tick);
       } else {
         animFrameRef.current = 0;
       }
-    };
+    }
 
     animFrameRef.current = requestAnimationFrame(tick);
   }, []);
@@ -96,6 +182,10 @@ export function usePrototypeState() {
       pusherPosition: 0,
       cheeseProgress: 0,
       showCheeseOutput: false,
+      followerPlatePosition: 0,
+      followerSpringCompressed: false,
+      gratingCycle: 0,
+      isResettingCheese: false,
     }));
   }, []);
 
@@ -116,5 +206,12 @@ export function usePrototypeState() {
     };
   }, []);
 
-  return { state, setMode, activate, reset, toggleExploded, toggleInternalPath };
+  return {
+    state,
+    setMode,
+    activate,
+    reset,
+    toggleExploded,
+    toggleInternalPath,
+  };
 }

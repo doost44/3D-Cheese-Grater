@@ -9,11 +9,11 @@
  *
  * Grated cheese particles are rendered with an InstancedMesh for performance.
  */
-import { useRef, useMemo } from 'react';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
-import type { PrototypeState } from '../types';
-import { CHEESE_COLOR, GRATED_COLOR } from '../types';
+import { useRef, useMemo } from "react";
+import { useFrame } from "@react-three/fiber";
+import * as THREE from "three";
+import type { PrototypeState } from "../types";
+import { CHEESE_COLOR, GRATED_COLOR } from "../types";
 
 /* ── Shared dimensions (must match GrateTogetherModel) ── */
 const BASE_W = 1.6;
@@ -54,7 +54,13 @@ interface Props {
 }
 
 export function CheeseDemo({ prototypeState }: Props) {
-  const { mode, cheeseProgress, showCheeseOutput, isAnimating } = prototypeState;
+  const {
+    mode,
+    cheeseProgress,
+    showCheeseOutput,
+    isAnimating,
+    followerPlatePosition,
+  } = prototypeState;
 
   const cheeseRef = useRef<THREE.Mesh>(null);
   const instanceRef = useRef<THREE.InstancedMesh>(null);
@@ -65,14 +71,28 @@ export function CheeseDemo({ prototypeState }: Props) {
   const spawnTimer = useRef(0);
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
-  /* Compute cheese position based on mode and progress */
-  const getCheesePosition = (progress: number, currentMode: 'safe' | 'pro'): THREE.Vector3 => {
-    if (currentMode === 'safe') {
-      // Cheese travels from funnel top down through enclosed channel
-      const startY = BODY_H + 0.3;
-      const endY = BODY_H * 0.2;
-      const y = THREE.MathUtils.lerp(startY, endY, progress);
-      return new THREE.Vector3(0, y, -0.04);
+  /* Compute cheese position based on mode and follower plate (safe mode) */
+  const getCheesePosition = (
+    progress: number,
+    currentMode: "safe" | "pro",
+    followerPlate: number,
+  ): THREE.Vector3 => {
+    if (currentMode === "safe") {
+      // Cheese is always just above the follower plate in safe mode
+      // Follower plate moves from top (0) to bottom (1)
+      const plateYTop = BODY_H * 0.88;
+      const plateYBot = BODY_H * 0.88 - BODY_H * 0.55;
+      const y = THREE.MathUtils.lerp(plateYTop, plateYBot, followerPlate);
+      // Z: cheese moves forward slightly as it nears the grater
+      const z =
+        followerPlate < 0.6
+          ? -0.04
+          : THREE.MathUtils.lerp(
+              -0.04,
+              BODY_D / 2 - 0.05,
+              (followerPlate - 0.6) / 0.4,
+            );
+      return new THREE.Vector3(0, y, z);
     } else {
       // Cheese approaches from front, presses against exposed grater plate
       const startZ = BODY_D / 2 + 0.4;
@@ -84,8 +104,8 @@ export function CheeseDemo({ prototypeState }: Props) {
   };
 
   /* Grated output spawn position (where shreds exit the grater) */
-  const getOutputPosition = (currentMode: 'safe' | 'pro'): THREE.Vector3 => {
-    if (currentMode === 'safe') {
+  const getOutputPosition = (currentMode: "safe" | "pro"): THREE.Vector3 => {
+    if (currentMode === "safe") {
       // Shreds exit internally and fall into the front bin
       return new THREE.Vector3(
         (Math.random() - 0.5) * 0.3,
@@ -105,8 +125,18 @@ export function CheeseDemo({ prototypeState }: Props) {
   useFrame((_, delta) => {
     /* ── Move cheese block ──────────────────────── */
     if (cheeseRef.current) {
-      if (cheeseProgress > 0) {
-        const target = getCheesePosition(cheeseProgress, mode);
+      if (mode === "safe") {
+        // Cheese follows follower plate in safe mode
+        const target = getCheesePosition(
+          cheeseProgress,
+          mode,
+          followerPlatePosition,
+        );
+        cheeseRef.current.position.lerp(target, Math.min(delta * 8, 1));
+        cheeseRef.current.visible = true;
+      } else if (cheeseProgress > 0) {
+        // Pro mode: use progress
+        const target = getCheesePosition(cheeseProgress, mode, 0);
         cheeseRef.current.position.lerp(target, Math.min(delta * 8, 1));
         cheeseRef.current.visible = true;
       } else {
@@ -139,14 +169,14 @@ export function CheeseDemo({ prototypeState }: Props) {
     /* ── Update particles ───────────────────────── */
     if (!instanceRef.current) return;
 
-    const floorY = 0.12;   // top of base
+    const floorY = 0.12; // top of base
     let visible = 0;
 
     for (let i = 0; i < MAX_PARTICLES; i++) {
       const p = particles.current[i];
       if (!p.active) continue;
 
-      p.vel.y -= 3.5 * delta;  // gravity
+      p.vel.y -= 3.5 * delta; // gravity
       p.pos.addScaledVector(p.vel, delta);
       p.life -= delta * 0.25;
 
@@ -179,14 +209,23 @@ export function CheeseDemo({ prototypeState }: Props) {
     instanceRef.current.instanceMatrix.needsUpdate = true;
   });
 
-  const startPos = getCheesePosition(0, mode);
+  const startPos = getCheesePosition(0, mode, 0);
 
   return (
     <>
       {/* Cheese block */}
-      <mesh ref={cheeseRef} position={startPos.toArray()} visible={false} castShadow>
+      <mesh
+        ref={cheeseRef}
+        position={startPos.toArray()}
+        visible={false}
+        castShadow
+      >
         <boxGeometry args={[CHEESE_W, CHEESE_H, CHEESE_D]} />
-        <meshStandardMaterial color={CHEESE_COLOR} roughness={0.72} metalness={0} />
+        <meshStandardMaterial
+          color={CHEESE_COLOR}
+          roughness={0.72}
+          metalness={0}
+        />
       </mesh>
 
       {/* Grated cheese particles */}
@@ -196,7 +235,11 @@ export function CheeseDemo({ prototypeState }: Props) {
         castShadow
       >
         <sphereGeometry args={[1, 4, 3]} />
-        <meshStandardMaterial color={GRATED_COLOR} roughness={0.85} metalness={0} />
+        <meshStandardMaterial
+          color={GRATED_COLOR}
+          roughness={0.85}
+          metalness={0}
+        />
       </instancedMesh>
     </>
   );
