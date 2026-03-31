@@ -57,9 +57,9 @@ export function usePrototypeState() {
     }
 
     isRunningRef.current = true;
-    let currentMode: GraterMode = "safe";
+    const modeRef = { current: state.mode };
     setState((prev) => {
-      currentMode = prev.mode;
+      modeRef.current = prev.mode;
       safeStartProgressRef.current = 0;
       return {
         ...prev,
@@ -86,7 +86,7 @@ export function usePrototypeState() {
     let elapsedTotal = 0;
     let pileLevel = 0;
 
-    if (currentMode === "pro") {
+    if (modeRef.current === "pro") {
       /* ── PRO MODE: 4 stroke cycles, cheese presses from front ── */
       const PRO_STROKES = 4;
 

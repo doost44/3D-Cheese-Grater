@@ -23,8 +23,6 @@ const BIN_H = BODY_H * 0.25;
 
 /* Feed channel explode offset — must match GrateTogetherModel EXPLODE_OFFSETS.feedChannel */
 const FEED_CHANNEL_EXPLODE: [number, number, number] = [0, 0.3, 1.8];
-/* Collection bin explode offset */
-const BIN_EXPLODE: [number, number, number] = [0, -0.45, 2.2];
 
 /* ── Cheese block size ─────────────────────────────── */
 const CHEESE_W = 0.26;
