@@ -10,8 +10,6 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import type { GraterMode, GraterStyle, PrototypeState } from "../types";
 import { INITIAL_STATE } from "../types";
 
-/** Duration of the cheese-grating demonstration in ms */
-const DEMO_DURATION = 4000;
 /** Fraction of safe-path travel advanced by each push cycle */
 const SAFE_ADVANCE_PER_PUSH = 0.32;
 /** Maximum safe-mode travel to preserve the safety stub */
@@ -20,7 +18,6 @@ const SAFE_MAX_TRAVEL = 0.9;
 export function usePrototypeState() {
   const [state, setState] = useState<PrototypeState>(INITIAL_STATE);
   const animFrameRef = useRef<number>(0);
-  const startTimeRef = useRef<number>(0);
   const safeStartProgressRef = useRef<number>(0);
   const isRunningRef = useRef(false);
 

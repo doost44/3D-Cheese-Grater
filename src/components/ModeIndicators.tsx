@@ -11,7 +11,6 @@ import { MODE_ACCENT } from "../types";
 const BASE_W = 1.6;
 const BODY_H = BASE_W * 2.2;
 const BODY_D = 0.9;
-const BIN_H = BODY_H * 0.25;
 
 interface Props {
   prototypeState: PrototypeState;
