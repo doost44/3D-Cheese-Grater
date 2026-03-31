@@ -8,15 +8,15 @@ The user can rotate, zoom, and inspect the product in 3D space, switch between *
 
 ## Features
 
-| Feature | Details |
-|---|---|
-| 🧀 Dual-mode grater | **Safe Mode** (guided, enclosed grating for children 8–12) and **Pro Mode** (open grater face for precision use) |
-| 🔩 Procedural geometry | Full product model built from primitives — no external assets required |
-| 🛡️ Safe Mode | Closed shutter, captive pusher, enclosed feed channel, green accent cues |
-| ⚡ Pro Mode | Retracted shutter, exposed grater plate, direct front access |
-| 🎞 Cheese animation | Mode-specific cheese interaction demo with grated particles |
-| 🖱 Orbit controls | Drag to orbit, scroll to zoom, auto-rotates when idle |
-| 📦 Zero external assets | Fully procedural — runs immediately |
+| Feature                 | Details                                                                                        |
+| ----------------------- | ---------------------------------------------------------------------------------------------- |
+| 🧀 Dual-mode grater     | **Safe Mode** (guided, enclosed grating) and **Pro Mode** (open grater face for precision use) |
+| 🔩 Procedural geometry  | Full product model built from primitives — no external assets required                         |
+| 🛡️ Safe Mode            | Closed shutter, captive pusher, enclosed feed channel, green accent cues                       |
+| ⚡ Pro Mode             | Retracted shutter, exposed grater plate, direct front access                                   |
+| 🎞 Cheese animation     | Mode-specific cheese interaction demo with grated particles                                    |
+| 🖱 Orbit controls       | Drag to orbit, scroll to zoom, auto-rotates when idle                                          |
+| 📦 Zero external assets | Fully procedural — runs immediately                                                            |
 
 ---
 
@@ -41,19 +41,20 @@ The browser preview opens as soon as the dev server starts.
 
 ## Controls
 
-| Control | Action |
-|---|---|
-| 🖱 Drag | Orbit around the product |
-| Scroll | Zoom in/out |
-| **SAFE / PRO** toggle | Switch between Safe Mode and Pro Mode |
-| **Activate** button | Run the cheese interaction demonstration for the current mode |
-| **Reset** button | Reset the demonstration to its initial state |
+| Control               | Action                                                        |
+| --------------------- | ------------------------------------------------------------- |
+| 🖱 Drag               | Orbit around the product                                      |
+| Scroll                | Zoom in/out                                                   |
+| **SAFE / PRO** toggle | Switch between Safe Mode and Pro Mode                         |
+| **Activate** button   | Run the cheese interaction demonstration for the current mode |
+| **Reset** button      | Reset the demonstration to its initial state                  |
 
 ---
 
 ## Mode Behavior
 
 ### Safe Mode
+
 - Face shutter is **closed** and latched
 - Only narrow slot windows are visible over the grating area
 - Captive pusher is **engaged** and visible in the guided channel
@@ -64,6 +65,7 @@ The browser preview opens as soon as the dev server starts.
 - The front grater face is never exposed
 
 ### Pro Mode
+
 - Face shutter **retracts** to fully expose the grater plate
 - Pusher is **parked** / visually disengaged
 - Collection bin remains visible
@@ -75,12 +77,12 @@ The browser preview opens as soon as the dev server starts.
 
 ## Scripts
 
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Start Vite dev server (HMR) |
-| `npm run build` | TypeScript + production bundle |
+| Command           | Purpose                          |
+| ----------------- | -------------------------------- |
+| `npm run dev`     | Start Vite dev server (HMR)      |
+| `npm run build`   | TypeScript + production bundle   |
 | `npm run preview` | Preview production build locally |
-| `npm run lint` | ESLint |
+| `npm run lint`    | ESLint                           |
 
 ---
 
