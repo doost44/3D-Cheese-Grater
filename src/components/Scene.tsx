@@ -44,7 +44,7 @@ function SceneContent({ prototypeState, onSelectGraterStyle }: SceneProps) {
       <directionalLight position={[0, 5, -5]} intensity={0.4} color="#e0e8ff" />
       {/* Low bounce fill */}
       <pointLight position={[0, 0.3, 2]} intensity={0.15} color="#f0ece6" />
-      <hemisphereLight args={['#ffffff', '#d5d0ca', 0.35]} />
+      <hemisphereLight args={['#ffffff', '#e8e4e0', 0.35]} />
 
       {/* GrateTogether product model */}
       <GrateTogetherModel prototypeState={prototypeState} />
@@ -66,7 +66,7 @@ function SceneContent({ prototypeState, onSelectGraterStyle }: SceneProps) {
       {/* Countertop surface */}
       <mesh position={[0, -0.01, 0]} rotation={[-Math.PI / 2, 0, 0]} receiveShadow>
         <planeGeometry args={[10, 8]} />
-        <meshStandardMaterial color="#d5cfc8" roughness={0.9} metalness={0} />
+        <meshStandardMaterial color="#eae8e4" roughness={0.9} metalness={0} />
       </mesh>
 
       {/* Contact shadows */}

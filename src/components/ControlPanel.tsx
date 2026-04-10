@@ -9,6 +9,7 @@
  * - Internal Path toggle
  * - Mode description and status
  */
+import { useState } from "react";
 import type { GraterMode, PrototypeState } from "../types";
 import { GRATER_STYLE_LABELS } from "../types";
 
@@ -31,6 +32,7 @@ export function ControlPanel({
 }: Props) {
   const { mode, isAnimating, isExploded, showInternalPath } = state;
   const isSafe = mode === "safe";
+  const [copyExpanded, setCopyExpanded] = useState(false);
 
   return (
     <div className="controls-overlay">
@@ -38,6 +40,16 @@ export function ControlPanel({
       <header className="title-block">
         <h1 className="title-main">GrateTogether</h1>
         <p className="title-sub">Dual-Mode Cheese Grater Workstation</p>
+        <p className={`title-copy${copyExpanded ? "" : " truncated"}`}>
+          A countertop grater that switches between an enclosed safe mode
+          with guided feeding and an open pro mode for direct manual control.
+        </p>
+        <button
+          className="read-more-toggle"
+          onClick={() => setCopyExpanded((v) => !v)}
+        >
+          {copyExpanded ? "Show less" : "Read more"}
+        </button>
       </header>
 
       {/* Mode selector panel */}

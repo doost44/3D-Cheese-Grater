@@ -1,21 +1,23 @@
 /* ── Layout ──────────────────────────────────────────── */
 .app {
-  position: fixed;
-  inset: 0;
-  overflow: hidden;
+  min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #ffffff;
 }
 
 .canvas-wrap {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 50% 40%, #e8e4df 0%, #c8c4be 100%);
+  position: relative;
+  height: 100vh;
+  background: #ffffff;
 }
 
 /* ── Controls overlay ───────────────────────────────── */
 .controls-overlay {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   pointer-events: none;
   display: grid;
   grid-template-areas:
@@ -37,6 +39,9 @@
 .title-block {
   grid-area: title;
   align-self: start;
+  position: relative;
+  z-index: 10;
+  margin-bottom: 32px;
 }
 
 .title-main {
@@ -54,6 +59,39 @@
   color: rgba(60, 60, 60, 0.55);
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.title-copy {
+  margin: 6px 0 0;
+  font-size: 0.72rem;
+  color: rgba(60, 60, 60, 0.5);
+  line-height: 1.55;
+  max-width: 340px;
+}
+
+.title-copy.truncated {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.read-more-toggle {
+  display: inline;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 4px;
+  font-family: inherit;
+  font-size: 0.68rem;
+  color: rgba(60, 60, 60, 0.65);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: rgba(60, 60, 60, 0.3);
+}
+
+.read-more-toggle:hover {
+  color: rgba(60, 60, 60, 0.85);
 }
 
 /* ── Mode Panel ─────────────────────────────────────── */
@@ -325,6 +363,166 @@
   padding-bottom: 4px;
 }
 
+/* ── CTA Section ───────────────────────────────────── */
+.cta-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 56px 24px 48px;
+  background: #ffffff;
+}
+
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.step-item {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.step-item.current {
+  color: #1a1a1a;
+}
+
+.step-item.future {
+  color: #b0b0b0;
+}
+
+.step-arrow {
+  color: #d0d0d0;
+  font-size: 0.75rem;
+  user-select: none;
+}
+
+.cta-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 14px 40px;
+  background: #1a1a1a;
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s;
+  user-select: none;
+}
+
+.cta-primary:hover {
+  background: #333;
+  transform: translateY(-1px);
+}
+
+.cta-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.cta-secondary {
+  margin-top: 16px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: #888;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  text-decoration: none;
+  transition: color 0.2s;
+  letter-spacing: 0.02em;
+}
+
+.cta-secondary:hover {
+  color: #555;
+  text-decoration: underline;
+}
+
+/* ── V2 Teaser Card ────────────────────────────────── */
+.v2-teaser-section {
+  display: flex;
+  justify-content: center;
+  padding: 0 24px 64px;
+  background: #ffffff;
+}
+
+.v2-teaser-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  min-height: 260px;
+  border: 2px dashed #d0d0d0;
+  border-radius: 8px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 24px;
+}
+
+.v2-teaser-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  opacity: 0.5;
+  transition: opacity 0.3s;
+}
+
+.v2-teaser-card:hover .v2-teaser-inner {
+  opacity: 0.65;
+}
+
+.v2-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: #888;
+}
+
+.v2-icon {
+  width: 48px;
+  height: 48px;
+  color: #999;
+}
+
+.v2-label {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #555;
+}
+
+.v2-sublabel {
+  font-size: 0.78rem;
+  color: #999;
+  text-align: center;
+  line-height: 1.5;
+  max-width: 280px;
+}
+
 /* ── Responsive tweaks ──────────────────────────────── */
 @media (max-width: 480px) {
   .controls-overlay {
@@ -348,5 +546,18 @@
 
   .action-row {
     flex-wrap: wrap;
+  }
+
+  .cta-primary {
+    width: 100%;
+  }
+
+  .step-indicator {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .step-arrow {
+    transform: rotate(90deg);
   }
 }

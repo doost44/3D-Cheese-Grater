@@ -27,6 +27,7 @@ export function ModeIndicators({ prototypeState }: Props) {
       <Html
         position={[0, BODY_H + 0.65 + (isExploded ? 1.6 : 0), 0]}
         center
+        zIndexRange={[20, 20]}
         style={{ pointerEvents: "none", userSelect: "none" }}
       >
         <div
@@ -51,6 +52,7 @@ export function ModeIndicators({ prototypeState }: Props) {
       <Html
         position={[0, BODY_H + 0.32 + (isExploded ? 1.6 : 0), 0]}
         center
+        zIndexRange={[20, 20]}
         style={{ pointerEvents: "none", userSelect: "none" }}
       >
         <div style={labelStyle}>Top Funnel</div>
@@ -63,6 +65,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           BODY_D / 2 + 0.35 + (isExploded ? 0.7 : 0),
         ]}
         center
+        zIndexRange={[20, 20]}
         style={{ pointerEvents: "none", userSelect: "none" }}
       >
         <div style={labelStyle}>
@@ -77,6 +80,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           BODY_D / 2 + 0.35 + (isExploded ? 1.4 : 0),
         ]}
         center
+        zIndexRange={[20, 20]}
         style={{ pointerEvents: "none", userSelect: "none" }}
       >
         <div style={labelStyle}>Collection Bin</div>
