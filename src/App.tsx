@@ -1,10 +1,18 @@
-import { Scene } from './components/Scene';
-import { ControlPanel } from './components/ControlPanel';
-import { usePrototypeState } from './hooks/usePrototypeState';
-import './App.css';
+import { Scene } from "./components/Scene";
+import { ControlPanel } from "./components/ControlPanel";
+import { usePrototypeState } from "./hooks/usePrototypeState";
+import "./App.css";
 
 function App() {
-  const { state, setMode, activate, reset, toggleExploded, toggleInternalPath, setGraterStyle } = usePrototypeState();
+  const {
+    state,
+    setMode,
+    activate,
+    reset,
+    toggleExploded,
+    toggleInternalPath,
+    setGraterStyle,
+  } = usePrototypeState();
 
   return (
     <div className="app">
@@ -32,8 +40,9 @@ function App() {
         <button
           className="cta-primary"
           onClick={() => {
-            const configurator = document.getElementById('configurator');
-            if (configurator) configurator.scrollIntoView({ behavior: 'smooth' });
+            const configurator = document.getElementById("configurator");
+            if (configurator)
+              configurator.scrollIntoView({ behavior: "smooth" });
           }}
         >
           Configure Your GrateTogether
@@ -41,8 +50,8 @@ function App() {
         <button
           className="cta-secondary"
           onClick={() => {
-            const explainer = document.getElementById('explainer');
-            if (explainer) explainer.scrollIntoView({ behavior: 'smooth' });
+            const explainer = document.getElementById("explainer");
+            if (explainer) explainer.scrollIntoView({ behavior: "smooth" });
           }}
         >
           Learn how it works →
@@ -71,7 +80,11 @@ function App() {
               />
               {/* Dotted drop rectangle */}
               <rect
-                x="10" y="36" width="28" height="8" rx="2"
+                x="10"
+                y="36"
+                width="28"
+                height="8"
+                rx="2"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeDasharray="3 2"
@@ -85,6 +98,17 @@ function App() {
         </div>
       </section>
       {/* END V2 PREVIEW */}
+
+      <section className="explainer-section" id="explainer">
+        <div className="explainer-card">
+          <h2 className="explainer-title">How It Works</h2>
+          <p className="explainer-copy">
+            Switch to Exploded View in the panel to inspect each assembly part,
+            then run Activate to see mode-specific cheese flow and bin
+            collection.
+          </p>
+        </div>
+      </section>
     </div>
   );
 }

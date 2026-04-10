@@ -92,6 +92,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[0, 0.06 - 0.6, 0]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={labelStyle}>Base / Foot Assembly</div>
@@ -100,6 +101,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[0, BODY_H * 0.5, 0.15]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={labelStyle}>Internal Frame</div>
@@ -109,6 +111,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[0.35, BODY_H * 0.62 + 0.3, 1.8]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={labelStyle}>Vertical Feed Chute</div>
@@ -117,6 +120,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[0, BODY_H + 0.08 + 1.45, 1.4]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={labelStyle}>Top Pusher + Guide Stem</div>
@@ -125,6 +129,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[0.2, BODY_H + 0.58, 1.4]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={labelStyleSmall}>Pusher Return Spring</div>
@@ -133,6 +138,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[-1.1, BODY_H * 0.35 + 0.35, 0.6]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={labelStyle}>Safe-Mode Enclosure</div>
@@ -141,6 +147,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[0.35, BODY_H * 0.27 - 0.55, 1.8]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={labelStyle}>Angled Internal Grating Plate</div>
@@ -149,6 +156,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[0.3, BODY_H * 0.38 - 0.25, 1.6]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={labelStyle}>Force Redirector</div>
@@ -157,6 +165,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[BASE_W * 0.7, BODY_H * 0.82, BODY_D / 2 + 0.15]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={labelStyleSmall}>Bin Interlock</div>
@@ -165,6 +174,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[0.3, BODY_H * 0.82 + 0.3, 1.8]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={labelStyleSmall}>Spring-Loaded Follower Plate</div>
@@ -173,6 +183,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[0.3, BODY_H * 0.92 + 0.3, 1.8]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={labelStyleSmall}>Follower Return Spring</div>
@@ -182,6 +193,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[-0.8, BODY_H + 1.7, 1.8]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={flowStyle}>1) Cheese enters from top feed</div>
@@ -190,6 +202,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[-0.8, BODY_H + 1.45, 1.8]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={flowStyle}>2) Pusher stroke: down (v)</div>
@@ -198,6 +211,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[-0.8, BODY_H + 1.2, 1.8]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={flowStyle}>
@@ -208,6 +222,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[-0.8, BODY_H + 0.95, 1.8]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={flowStyle}>4) Grated cheese falls into bin</div>
@@ -216,6 +231,7 @@ export function ModeIndicators({ prototypeState }: Props) {
           <Html
             position={[-0.8, BODY_H + 0.7, 1.8]}
             center
+            zIndexRange={[20, 20]}
             style={{ pointerEvents: "none", userSelect: "none" }}
           >
             <div style={flowStyleSmall}>
@@ -227,6 +243,7 @@ export function ModeIndicators({ prototypeState }: Props) {
             <Html
               position={[0.04, BODY_H * 0.84, 0.3]}
               center
+              zIndexRange={[20, 20]}
               style={{ pointerEvents: "none", userSelect: "none" }}
             >
               <div style={flowStyleSmall}>Flow path enabled</div>

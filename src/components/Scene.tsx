@@ -3,7 +3,7 @@
  * the GrateTogether model, cheese demo, mode indicators, and orbit controls.
  */
 import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import { ContactShadows, OrbitControls } from "@react-three/drei";
 import { Suspense } from "react";
 import type { PrototypeState } from "../types";
 import { GrateTogetherModel } from "./GrateTogetherModel";
@@ -74,7 +74,7 @@ function SceneContent({ prototypeState, onSelectGraterStyle }: SceneProps) {
         receiveShadow
       >
         <planeGeometry args={[10, 8]} />
-        <meshStandardMaterial color="#d5cfc8" roughness={0.9} metalness={0} />
+        <meshStandardMaterial color="#efefed" roughness={0.92} metalness={0} />
       </mesh>
 
       {/* Contact shadows */}
@@ -107,7 +107,10 @@ export function Scene({ prototypeState, onSelectGraterStyle }: SceneProps) {
     <Canvas
       shadows
       camera={{ position: [3.5, 2.8, 4.5], fov: 40 }}
-      style={{ background: "transparent" }}
+      onCreated={({ gl }) => {
+        gl.setClearColor("#ffffff", 1);
+      }}
+      style={{ background: "#ffffff" }}
     >
       <Suspense fallback={null}>
         <SceneContent
